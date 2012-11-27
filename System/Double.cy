@@ -1,0 +1,16 @@
+module System$Double = 
+concrete struct
+abstract native Double :: # = "SUM"
+native (+) :: Double -> Double -> Double = "\\x -> \\y -> x+(y::Double)"
+native (-) :: Double -> Double -> Double = "\\x -> \\y -> x-(y::Double)"
+native (*) :: Double -> Double -> Double = "\\x -> \\y -> x*(y::Double)"
+native (/) :: Double -> Double -> Double = "\\x -> \\y -> x/(y::Double)"
+native negate :: Double -> Double = "\\x -> - x::Double"
+native (==) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x==(y::Double)"
+native (/=) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x/=(y::Double)"
+native (<=) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x<=(y::Double)"
+native (>=) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x>=(y::Double)"
+native (<) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x<(y::Double)"
+native (>) :: Double -> Double -> System$Bool.Bool = "\\x -> \\y -> x>(y::Double)"
+abstract native show :: Double -> System$String.String = "\\x -> show (x::Double)"
+abstract native read :: System$String.String -> Double = "\\x -> (read x) :: Double"

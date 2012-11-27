@@ -1,0 +1,3 @@
+cayenne: Compilation errors:
+"err21a.cy", line 3, column 24, Pattern matching on a non-data type: sig {  }
+

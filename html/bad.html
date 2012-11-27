@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Doubtful features</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Doubtful features</h1>
+
+There are some features of Cayenne that should not be used
+normally, but for completeness they are mentioned here.
+
+<h2>Native</h2>
+Members of a record can be declared native, the body then
+consists of a string that is emitted literally in the generated LML
+code.<p>
+This feature may disappear.
+
+<h2>Use <samp>*</samp></h2>
+In the open clause it is possible to give <samp>*</samp> instead of a
+list of identifiers.  This will bring all the members of the record
+into scope.  It is a dubious feature since it introduces bound names
+without an explicit binding construct.<p>
+This feauture may disappear.
+
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Thu Jan  1 16:39:34 MET 1998
+<!-- hhmts end -->
+</body> </html>

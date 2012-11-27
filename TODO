@@ -1,0 +1,72 @@
+* Use restrictive environment when type checking record types
+
+Haskell prelude
+
+Add pattern guards
+
+* Add negative knowledge
+
+Avoid duplication of default branch
+
+Allow Haskell complex pattern overlap
+
+* Warn if pattern variable has same name as a constructor.
+
+* Implement as patterns
+
+* Check # of patters in fundef outside parser
+
+* Remove unused bound vars in sig
+
+* Use bound names from signatures
+
+* Don't duplicate in Copen
+
+Don't require types in Cdo
+
+* Drop hidden args from argument list
+
+* Throw away all types in LML translation.
+
+* Binary interface files
+
+Type check for consistency.
+
+* Two level kinds.
+
+* Abort if lmlc aborts.
+
+Polykinds.
+
+* Put temp file in /tmp.
+
+* Trace bug in test/vector.cy with listToVector.
+
+* Multiple variables in lambda.
+
+Dependent data.
+
+Funny data.
+
+Should make sure all postulate do not compare equal (now all
+evaluate to undefined.  Evaluate to self?)
+
+typeOf can be applied to type incorrect terms, bad1.tar
+
+* least gets undef variables.
+
+* least1 gets undef variables.
+
+Improve type error message so we don't get 'is T should be T'.
+
+operator sections.
+
+Check that contructors definitions don't duplicate (with normal ones).
+
+WRONG
+typeCheck :: (e :: Expr) -> (s :: TEnv) -> Maybe (TCheck e s)
+typeCheck (IConst _) _ = Just struct { t = TInt;  p :: HasType e t s = truth }
+
+Warn for duplicate variables in patterns.
+
+Subtypes

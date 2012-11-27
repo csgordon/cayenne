@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Syntax</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Syntax</h1>
+The syntax of Cayenne is very close to that of <a
+ref="http://www.haskell.org">Haskell</a>.
+
+<h2>Lexical structure</h2>
+
+<h3>Identifiers</h3>
+Identifiers consist of an initial letter optionally followed by
+more letters, digits, single quote ('), or dollar sign ($).
+If an identifier contains a dollar sign it is a module identifier
+and it can only be used to name <a href="module.html">modules</a>.
+<p>
+Some normal identifiers: <samp>x</samp>, <samp>x'</samp>, 
+<samp>foo</samp>, <samp>Bool</samp>.<br>
+Some module identifiers: <samp>foo$bar</samp>, <samp>System$Bool</samp>
+
+<h4>Reserved words</h4>
+Some identifiers are reserved words and cannot be used as variables:
+<pre>
+abstract, case, concrete, data, do, in, interface, let, module
+of, open, native, private, public, sig, struct, type, use
+</pre>
+
+<h3>Operators</h3>
+Operators are built from a sequence of the characters:
+<pre>! @ # $ % & * + . / &lt; = > ? \ ^ | : - ~ ,
+¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ
+¶ · ¸ ¹ º » ¼ ½ ¾ ¿ × ÷
+</pre>
+An operators can be used where a variable is needed by enclosing it in
+parenthesis.
+
+<h4>Reserved operators</h4>
+Some operators are reserved:
+<pre>::, =, @, \, |, #, ->, |->, ., &lt;-
+</pre>
+
+<h4>Operator precedences</h4>
+There is a <a name="prectable">fixed set of operator precedences</a>:<br>
+<table border=2>
+<tr>
+<td>Operator</td><td>Associativity</td><td>Precedence</td>
+</tr><tr>
+<td><samp>-></samp>,<samp>|-></samp></td><td>right</td><td>0</td>
+</tr><tr>
+<td><samp>===</samp></td><td>none</td><td>1</td>
+</tr><tr>
+<td><samp>,</samp></td><td>left</td><td>1</td>
+</tr><tr>
+<td><samp>||</samp></td><td>right</td><td>2</td>
+</tr><tr>
+<td><samp>&&</samp></td><td>right</td><td>3</td>
+</tr><tr>
+<td><samp>==</samp>,<samp>/=</samp>,<samp>&lt;=</samp>,<samp>>=</samp>,<samp>&lt;</samp>,<samp>></samp>
+    </td><td>none</td><td>4</td>
+</tr><tr>
+<td><samp>:</samp>,<samp>++</samp></td><td>right</td><td>5</td>
+</tr><tr>
+<td><samp>+</samp>,<samp>-</samp></td><td>left</td><td>6</td>
+</tr><tr>
+<td><samp>*</samp>,<samp>/</samp></td><td>left</td><td>7</td>
+</tr><tr>
+<td><samp>·</samp></td><td>right</td><td>8</td>
+</tr><tr>
+<td>other</td><td>left</td><td>9</td>
+</tr>
+</table>
+
+<h3>Literals</h3>
+<h4>Numeric literals</h4>
+Numeric literals consist of a (nonempty) sequence of digits, as in
+<samp>4711</samp>.
+<p>
+Numeric literals have type <samp>System$Int.Int</samp>.
+
+<h4>Character literals and String literals</h4>
+Character literals are written between single quotes, as in
+<samp>'a'</samp>, and strings between double quotes, as in
+<samp>"Hello"</samp>.  <p> Escape codes may be used in characters and
+strings to represent special characters. Note that a single quote '
+may be used in a string, but must be escaped in a character;
+similarly, a double quote " may be used in a character, but must be
+escaped in a string. \ must always be escaped. The category charesc
+also includes portable representations for the characters "alert"
+(\a), "backspace" (\b), "form feed" (\f), "new line" (\n), "carriage
+return" (\r), "horizontal tab" (\t), and "vertical tab" (\v).
+<p>
+Character literals have type <samp>System$Char.Char</samp> and string
+literals <samp>System$String.String</samp>.
+
+<h3>Layout</h3>
+Cayenne uses the same kind of layout rule as Haskell.
+In syntactic construct with of the form <samp>{ <i>item</i>; ... }</samp>
+the curly braces and semicolons can be replaced by layout.
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 31 01:39:59 CEST 1998
+<!-- hhmts end -->
+</body> </html>

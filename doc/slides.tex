@@ -1,0 +1,970 @@
+\nonstopmode
+
+\documentclass[17pt]{foils} % foils
+\usepackage{alltt}
+\usepackage{proof}
+
+\LogoOff
+
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+\newcommand{\te}[1]{{\tt #1}}
+\newcommand{\sss}[1]{\foilhead[-3ex]{{\hcolor{blue}#1}}}
+\newcommand{\ssss}[1]{\foilhead{{\hcolor{blue}#1}}}
+\newcommand{\sssss}[1]{\foilhead{\hcolor{blue}{#1}}}
+
+\newcommand{\sub}[1]{{\bf #1}\medskip}
+
+\newcommand{\hcolor}[1]{\color{#1}}
+
+\newcommand{\fcolor}{\hcolor{green}} %% color of functions
+\newcommand{\icolor}{\hcolor{green}} %% color of inlined code
+\newcommand{\icol}[1]{{\hcolor{red}#1}} %% color of inlined code
+
+\newcommand{\ncolor}{\hcolor{red}}
+\newcommand{\headingcolor}{\hcolor{headingcolor}}
+\newcommand{\dencolor}{\hcolor{red}}
+\newcommand{\emmcolor}{\hcolor{red}}
+\newcommand{\progcolor}{\hcolor{green}}
+
+\newcommand{\varvalcolor}{\hcolor{red}}
+\newcommand{\heapvalcolor}{\hcolor{red}}
+
+\newcommand\bs{\char '134}  % A backslash character for \tt font
+
+\title{
+Cayenne -- stronger than Haskell
+}
+\author{ Lennart Augustsson
+}
+\date{ October 1997 }
+\begin{document}
+\maketitle
+
+Cayenne is another functional language.  It has
+\begin{itemize}
+\item Haskell like syntax
+\item dependent types
+\item explicit polymorphism
+\item powerful records
+\item a Java-inspired module system
+\end{itemize}
+
+It does {\em not} have
+\begin{itemize}
+\item overloading
+\item classes
+\item decidable type checking
+\item type deduction
+\item correctness proofs (yet)
+\end{itemize}
+
+\newpage
+
+\foilhead{The basic types:}
+
+%Because of the dependent types the value and types expressions
+%have the same syntax (unlike Haskell).
+
+\begin{itemize}
+\item Functions
+\begin{alltt}
+Term                       Type
+\bs (x::t) -> e              t -> s
+                           (x::t) -> s
+
+f e
+
+t -> s                     #
+
+\end{alltt}
+\item Data types
+\begin{alltt}
+C1@t                       data C1 | C2 Int | C3 a
+
+case e of
+(C1)   -> e1
+(C2 i) -> e2
+(C3 x) -> e3
+
+data C1 | C2 Int | C3 a    #
+
+\end{alltt}
+Constructor names need not be unique and they live in
+a separate name space.
+
+\newpage
+\item Record types
+\begin{alltt}
+struct \{ x1 :: t1 = e1;     sig \{ x1 :: t1;
+         x2 :: t2 = e2 \}          x2 :: t2 \}
+
+e.x1
+
+sig \{ x1 :: t1; x2 :: t2 \} #
+
+\end{alltt}
+The definitions in the record can be mutually recursive.
+Record labels need not be unique.
+
+Record embellishments:
+\begin{alltt}
+struct                     sig
+  x1 :: t1 = e1;             x1 :: t1
+  private x2 :: t2 = e2
+
+
+\end{alltt}
+\begin{alltt}
+struct                     sig
+  x1 :: t1 = e1;             x1 :: t1;
+  concrete x2 :: t2 = e2     x2 :: t2 = e2
+
+
+\end{alltt}
+There are also the keywords {\tt public} and {\tt abstract}
+as the opposites of {\tt private} and {\tt concrete}.
+Definitions of type {\tt \#} default to {\tt concrete}
+other definitions to {\tt abstract}.
+
+\end{itemize}
+
+\newpage
+\foilhead{Syntactic spices}
+\begin{itemize}
+\item Types can be left out on all bindings except recursive ones.
+
+\item Let expressions
+\begin{alltt}
+let x1 :: t1
+    x1 = e1
+    x2 :: t2
+    x2 = e2
+in  e
+
+\end{alltt}
+
+\item Function definitions
+\begin{alltt}
+f :: Int -> Int -> Int     f :: Int -> Int -> Int
+f x y = e                  f = \bs (x::Int) -> 
+                                 (y::Int) -> e
+
+\end{alltt}
+
+\item Data type definitions
+\begin{alltt}
+data Bool = False | True   Bool :: #
+                           Bool = data False | True
+                           False :: Bool
+                           False = False@Bool
+                           True :: Bool
+                           True = True@Bool
+
+\end{alltt}
+
+\newpage
+\item Type definitions
+\begin{alltt}
+type T a = e               T :: # -> #
+                           T = \ (a :: #) -> e
+
+\end{alltt}
+
+\item Open
+\begin{alltt}
+open e                     let r = e
+use  x1::t1,x2::t2             x1 = r.x1
+in   e'                        x2 = r.x2
+                           in  e'
+\end{alltt}
+
+\item Infix operators
+
+There are a few predefined infix operators.
+
+\item Text inclusion
+
+A few predefined texts, corresponding to importing the
+standard prelude, can be included.
+
+\end{itemize}
+
+\newpage
+\foilhead{Examples}
+
+\begin{itemize}
+\item The identity function
+\begin{alltt}
+Haskell                   Cayenne
+id :: a -> a              id :: (a :: #) -> a -> a
+id x = x                  id a x = x
+
+id True                   id Bool True
+
+\end{alltt}
+
+\item Simple records
+\begin{alltt}
+let Coord = sig \{ x :: Int; y :: Int \}
+    origin :: Coord
+    origin = struct \{ x = 0; y = 0 \}
+    manhattan :: Coord -> Int
+    manhattan c = c.x + x.y
+in  manhattan origin
+
+\end{alltt}
+
+\item Lists
+\begin{alltt}
+data List a = Nil | Cons a (List a)
+
+\end{alltt}
+
+\newpage
+\item Dependent records
+\begin{alltt}
+struct
+    data Bool = False | True
+    not :: Bool -> Bool
+    not (True)  = False
+    not (False) = True
+    if :: (a :: #) -> Bool -> a -> a -> a
+    if a (True)  t e = t
+    if a (False) t e = e
+\end{alltt}
+This has type
+\begin{alltt}
+sig
+    Bool :: # = data False | True
+    False :: Bool = False@Bool
+    True :: Bool = True@Bool
+    not :: Bool -> Bool
+    if :: (a :: #) -> Bool -> a -> a -> a
+\end{alltt}
+
+
+\end{itemize}
+
+\newpage
+
+\foilhead{Modules}
+
+\begin{alltt}
+module foo$bar = e
+
+\end{alltt}
+
+A module is simply a named expression.  Module names live in a 
+separate global name space.  Module identifiers always contain
+a ``\$''.
+
+A type, as well as {\tt concrete} can be given as well.
+\begin{alltt}
+module concrete foo$bar :: t = e
+
+\end{alltt}
+
+\begin{alltt}
+module System$Bool = sig
+    data Bool = False | True
+    not :: Bool -> Bool
+    not (True)  = False
+    not (False) = True
+    if :: (a :: #) -> Bool -> a -> a -> a
+    if a (True)  t e = t
+    if a (False) t e = e
+\end{alltt}
+
+
+
+\newpage
+\begin{alltt}
+
+module foo$bar = sig
+tt :: System$Bool.Bool = System$Bool.True
+ff :: System$Bool.Bool = System$Bool.False
+
+module foo$baz = 
+open System$Bool use Bool, not, if in
+struct
+not_if :: (a :: #) -> Bool -> a -> a -> a
+not_if a c t e = if a (not c) t e
+
+\end{alltt}
+
+\newpage
+\foilhead{Hidden arguments}
+The type arguments are tedious.  But they can sometimes be left out!
+We introduce a new type of functions, where the argument can
+be left out.
+\begin{alltt}
+\bs (x::t) |-> e           (x::t) |-> s
+
+f | e          -- explicit argument
+f              -- hidden argument
+\end{alltt}
+Examples:
+\begin{alltt}
+let id :: (a :: #) |-> a -> a
+    id x = x
+in  id True
+
+if :: (a :: #) |-> Bool -> a -> a -> a
+if (True)  t e = t
+if (False) t e = e
+
+if True e1 e2
+\end{alltt}
+\mbox{~~~}or
+\begin{alltt}
+if |Int True 1 x
+\end{alltt}
+
+One necessary (but not sufficient) restriction that these functions
+must obey is that the type ``{\tt (x::t) |-> s}'' is only well formed
+if the variable ``{\tt x}'' occurrs free the expression ``{\tt s}''.
+
+\newpage
+\foilhead{Typechecking with dependent types}
+The interesting part of typechecking is the case expression.
+
+\begin{alltt}
+case x of
+    (True) -> 1
+    (False) -> "Hello"
+ :: (case x of
+       (True) -> Int
+       (False) -> String)
+\end{alltt}
+
+Keep track of the {\em value} of variables as well
+as their type!  Use values when normalizing types.
+
+\newpage
+Check:
+\begin{alltt}
+case x of
+    (True) -> 1
+    (False) -> "Hello"
+ :: (case x of
+       (True) -> Int
+       (False) -> String)
+
+
+\end{alltt}
+
+Check 1st arm:
+\begin{alltt}
+ 1 :: (case x of
+        (True) -> Int
+        (False) -> String)    [x := True]
+\end{alltt}
+which reduces to
+\begin{alltt}
+ 1 :: Int
+
+\end{alltt}
+
+Check 2nd arm:
+\begin{alltt}
+ "Hello" :: 
+      (case x of
+        (True) -> Int
+        (False) -> String)    [x := False]
+\end{alltt}
+which reduces to
+\begin{alltt}
+ "Hello" :: String
+\end{alltt}
+
+\newpage
+\foilhead{On stacks and queues}
+
+\begin{alltt}
+module concrete example$STACK = sig
+Stack :: # -> #
+empty :: (a :: #) |-> Stack a
+push :: (a :: #) |-> a -> Stack a -> Stack a
+pop :: (a :: #) |-> Stack a -> Stack a
+top :: (a :: #) |-> Stack a -> a
+isEmpty :: (a :: #) |-> Stack a -> System$Bool.Bool
+
+\end{alltt}
+\newpage
+\begin{alltt}
+module example$StackL :: example$STACK =
+#include Prelude
+struct
+abstract type Stack a = List a
+
+empty :: (a :: #) |-> Stack a
+empty = Nil
+
+push :: (a :: #) |-> a -> Stack a -> Stack a
+push x xs = Cons x xs
+
+pop :: (a :: #) |-> Stack a -> Stack a
+pop (Nil) = error "pop"
+pop (_ : xs') = xs'
+
+top :: (a :: #) |-> Stack a -> a
+top (Nil) = error "top"
+top (x : _) = x
+
+isEmpty :: (a :: #) |-> Stack a -> Bool
+isEmpty (Nil) = True
+isEmpty (_ : _) = False
+\end{alltt}
+
+\newpage
+\begin{alltt}
+module concrete example$QUEUE = sig
+Queue :: # -> #
+empty :: (a :: #) |-> Queue a
+enqueue :: (a :: #) |-> a -> Queue a -> Queue a
+dequeue :: (a :: #) |-> Queue a -> Queue a
+first :: (a :: #) |-> Queue a -> a
+
+\end{alltt}
+
+\newpage
+\begin{alltt}
+module example$StackToQueue :: 
+  example$STACK -> example$QUEUE =
+  \bs (s :: example$STACK) ->
+#include Prelude
+open s use Stack, push, pop, top, isEmpty in
+struct
+abstract type Queue a = Stack a
+
+empty :: (a :: #) |-> Queue a
+empty = s.empty
+
+enqueue :: (a :: #) |-> a -> Queue a -> Queue a
+enqueue x xs = app xs x
+
+dequeue :: (a :: #) |-> Queue a -> Queue a
+dequeue xs = pop xs
+
+first :: (a :: #) |-> Queue a -> a
+first xs = top xs
+
+private 
+app :: (a :: #) |-> Stack a -> a -> Stack a
+app xs y =
+    if (isEmpty xs) 
+       (push y s.empty)
+       (push (top xs) (app (pop xs) y))
+\end{alltt}
+\newpage
+\begin{alltt}
+module example$usestack = 
+#include Prelude
+open example$StackToQueue example$StackL 
+use enqueue, first, empty in
+append
+  (show (first (enqueue 1 (enqueue 2 empty))))
+  "{\bs}n"
+
+\end{alltt}
+
+
+\newpage
+\foilhead{Vectors with dependent types.}
+
+We would like to have the length of a vector manifest in the
+type to ensure that vectors are combined in the right way.
+
+\begin{alltt}
+VECTOR = sig
+    type Vector (n :: Integer) a
+    concatV :: (n :: Integer) |-> (m :: Integer) |-> 
+               (a :: #) |-> Vector n a -> Vector m a -> 
+               Vector (n + m) a
+    zipWithV :: (n :: Integer) |->
+                (a :: #) |-> (b :: #) |-> (c :: #) |->
+                (a->b->c) -> Vector n a -> Vector n b -> 
+                Vector n c
+    mkVector :: (a :: #) |-> (n :: Integer) ->
+                (Integer -> a) -> Vector n a
+
+\end{alltt}
+
+Example:
+\begin{alltt}
+let x = mkVector 5 id
+    y = mkVector 2 id
+    z = mkVector 3 id
+    yz = concatV y z
+    xyz = zipWithV (+) x yz
+
+\end{alltt}
+
+\newpage
+A sample implementation with lists.
+\begin{alltt}
+module example$vector :: VECTOR =
+#include Prelude
+struct
+
+abstract
+type Vector (n::Integer) a  = List a
+
+concatV xs ys = xs ++ ys
+
+zipWithV f xs ys = zipWith f xs ys
+
+mkVector n f = map f (enumFromTo 0 (n-1))
+
+\end{alltt}
+
+\newpage
+\foilhead{The tautology function.}
+
+We want a function that takes a boolean formula
+represented as a function and tells us if this
+formula is a tautology or not.
+
+In an untyped language this can be written as:
+\begin{alltt}
+taut x = if isFunction x then
+            taut (x True) && taut (x False)
+         else
+            x
+\end{alltt}
+
+To give this a type we need an extra argument
+that tell how many arguments x needs.
+
+\begin{alltt}
+taut 0 x = x
+taut (n+1) x = taut n (x True) && taut n (x False)
+\end{alltt}
+
+In Cayenne it looks like this
+
+\begin{alltt}
+data Nat = Zero | Succ Nat
+
+taut :: (n::Nat) -> TautArg n -> Bool
+taut (Zero) x = x
+taut (Succ m) f = taut m (f True) && taut m (f False)
+
+TautArg :: Nat -> #
+TautArg (Zero) = Bool
+TautArg (Succ m) = Bool -> TautArg m
+\end{alltt}
+
+\newpage
+\foilhead{{\tt printf}}
+\begin{alltt}
+PrintfType :: String -> #
+PrintfType ""           = String
+PrintfType ('%':'d':cs) = Int    -> PrintfType cs
+PrintfType ('%':'s':cs) = String -> PrintfType cs
+PrintfType ('%': _ :cs) =           PrintfType cs
+PrintfType ( _ :cs)     =           PrintfType cs
+
+printf :: (fmt::String) -> PrintfType fmt
+printf fmt = pr fmt ""
+
+pr :: (fmt::String) -> String -> PrintfType fmt
+pr ""           res = res
+pr ('%':'d':cs) res = 
+      \bs (i::Int)    -> pr cs (res ++ show i)
+pr ('%':'s':cs) res = 
+      \bs (s::String) -> pr cs (res ++ s)
+pr ('%': c :cs) res =
+      pr cs (res ++ [c])
+pr (c:cs)       res =
+      pr cs (res ++ [c])
+\end{alltt}
+
+\newpage
+\foilhead{A different list representation}
+\begin{alltt}
+private 
+ifT :: Bool -> # -> # -> #
+ifT (False) t f = f
+ifT (True)  t f = t
+
+abstract
+type List a = sig
+    null :: Bool 
+    head :: ifT null Unit a
+    tail :: ifT null Unit (List a)
+
+cons :: (a :: #) |-> a -> List a -> List a
+cons x xs = struct { null = False; head = x; tail = xs }
+
+nil :: (a :: #) |-> List a
+nil |a = struct { null = True; head = unit; tail = unit }
+
+length :: (a :: #) |-> List a -> Int
+length |a l = length' |a l.null l.tail
+
+private
+length' :: (a :: #) |-> (n::Bool) -> ifT n Unit (List a) -> Int
+length' |a (True)  t = 0
+length' |a (False) t = 1 + length |a t
+\end{alltt}
+
+\newpage
+\foilhead{Predicate logic as Cayenne types}
+Use the Curry-Howard isomorphism.
+
+\begin{tabular}{l|l}
+Predicate calculus              & Cayenne type          \\
+\hline 
+$F$                          & \te{Absurd} (or any empty type)               \\
+$T$                          & any non-empty type    \\
+$x \vee y$                      & \te{Either} $x\; y$   \\
+$x \wedge y$                    & \te{Pair} $x\; y$     \\
+$x \supset y$                   & $x$\te{~->~}$y$     \\
+$\neg x$                        & $x$\te{~->~Absurd}     \\
+$\forall x \in A . P(x)$        & \te{(}$x$\te{::}$A$\te{)~->~}$P(x)$ \\
+$\exists x \in A . P(x)$        & \te{\{}$x$\te{::}$A$\te{;~}$y$\te{::}$P(x)$\te{\}} \\
+\end{tabular}
+
+\begin{verbatim}
+
+data Absurd =
+data Pair x y = pair x y
+data Either x y = Left x | Right y
+
+\end{verbatim}
+
+False propositions will correspond to empty types
+and (constructively) true propositions will correspond
+to non-empty types.
+
+Finding an element in a type is the same as finding
+a proof.
+
+{\large CAVEAT} We ignore $\bot$ here; it inhabits
+every type since Cayenne has general recursion.
+
+\newpage
+${\it Refl}(R) = \forall x . x R x$ \\
+${\it Symm}(R) = \forall x . \forall y . x R y \supset y R x$ \\
+${\it Trans}(R) = \forall x . \forall y . \forall z . x R y \wedge y R z \supset x R z$ \\
+
+\begin{alltt}
+Rel :: (a :: #) -> #1
+Rel a = a -> a -> #
+
+Refl :: (a :: #) |-> Rel a -> #
+Refl |a R = (x::a) -> x `R` x
+
+Symm :: (a :: #) |-> Rel a -> #
+Symm |a R = (x::a) -> (y::a) -> x `R` y -> y `R` x
+
+Trans :: (a :: #) |-> Rel a -> #
+Trans |a R = (x::a) -> (y::a) -> (z::a) -> 
+    x `R` y -> y `R` z -> x `R` z
+
+Equiv :: (a :: #) |-> Rel a -> #
+Equiv R = sig
+    refl :: Refl R
+    symm :: Symm R
+    trans :: Trans R
+\end{alltt}
+
+\newpage
+\begin{alltt}
+data Absurd =
+
+data Truth = truth
+
+Lift :: Bool -> #
+Lift (False) = Absurd
+Lift (True)  = Truth
+
+LiftBin :: (a :: #) |-> (a -> a -> Bool) -> Rel a
+LiftBin |a op = \ (x::a) -> \ (y::a) -> Lift (op x y)
+
+type Eq a = sig
+    (==) :: a -> a -> Bool
+    equiv :: Equiv (LiftBin (==))
+
+\end{alltt}
+
+With classes
+\begin{alltt}
+class Eq a where
+    (==) :: a -> a -> Bool
+    equiv :: Equiv (LiftBin (==))
+\end{alltt}
+
+\newpage
+An {\tt Eq} instance for {\tt Unit}.
+
+\begin{alltt}
+data Unit = unit
+
+Eq_Unit :: Eq Unit
+Eq_Unit = struct 
+    (==) (unit) (unit) = True
+
+    equiv = struct
+        refl (unit) = truth
+        symm (unit) (unit) p = p
+        trans (unit) (unit) (unit) p q = p
+\end{alltt}
+
+\newpage
+An {\tt Eq} instance for {\tt Bool}.
+
+\begin{alltt}
+absurd :: (a :: #) |-> Absurd -> a
+absurd i = case i of \{ \}
+
+Eq_Bool :: Eq Bool
+Eq_Bool = struct
+    (==) (False) (False) = True
+    (==) (True)  (True)  = True
+    (==) _       _       = False
+
+    equiv = struct
+        refl (False) = truth
+        refl (True)  = truth
+        symm (False) (False) p = p
+        symm (False) (True)  p = absurd p
+        symm (True)  (False) p = absurd p
+        symm (True)  (True)  p = p
+        trans (False) (False) (False) p q = q
+        trans (False) (False) (True)  p q = absurd q
+        trans (False) (True)  _       p q = absurd p
+        trans (True)  (False) _       p q = absurd p
+        trans (True)  (True)  (False) p q = absurd q
+        trans (True)  (True)  (True)  p q = q
+\end{alltt}
+
+\newpage
+\foilhead{Implementation}
+
+There is a simple implementation (not quite complete yet).
+It translated to LML and compiles the LML code with type checking off.
+
+Example.
+
+\begin{alltt}
+module foo$bar =
+  "Hello, world{\bs}n"
+
+\end{alltt}
+
+Compile by
+\begin{alltt}
+cayenne bar.cy
+
+\end{alltt}
+
+And link by
+\begin{alltt}
+cayenne foo$bar
+
+\end{alltt}
+
+And run
+\begin{alltt}
+a.out
+
+\end{alltt}
+
+\newcommand{\nt}[1]{{\it #1}}
+\newcommand{\spp}{\mbox{~~}}
+
+\newcommand{\ruleh}[3]{\infer [$\sf \scriptsize #1$] {#3} {#2}}
+\newcommand{\seph}{ & }
+\newcommand{\judge}[2]{#1 \vdash #2}
+\newcommand{\judget}[2]{#1 & \vdash & #2}
+\newcommand{\hastype}[2]{#1 \in #2}
+\newcommand{\rsep}{\vspace*{5mm}}
+%\newcommand{\rsep}{\medskip}
+\newcommand{\dc}{$\te{::}$}
+\newcommand{\dt}{$\te{.}$}
+\newcommand{\sm}{$\te{;}$}
+\newcommand{\teq}{$\te{=}$}
+\newcommand{\fun}{$\te{->}$}
+\newcommand{\lam}{$\bs$}
+\newcommand{\eq}[2]{#1 \approx #2}
+\newcommand{\hash}[1]{\;$\te{\#}$_{#1}}
+\newcommand{\keyw}[1]{$\te{#1}$\;}
+
+\newcommand{\subst}[3]{#1[#2 \mapsto #3]}
+
+\newcommand{\eval}[2]{#1 & $\longmapsto$ & #2 \\}
+\newcommand{\evalu}[2]{#1 & $\longmapsto_*$ & #2 \\}
+\newcommand{\ieval}[2]{$ #1 \longmapsto #2 $}
+\newcommand{\ievalu}[2]{$ #1 \longmapsto_{*} #2 $}
+\newcommand{\imeval}[2]{$ #1 \longmapsto^* #2 $}
+\newcommand{\imevalu}[2]{$ #1 \longmapsto_{*}^* #2 $}
+
+\newpage
+\foilhead{Typing rules}
+\ruleh{Star}{\mbox{}}
+            {\judge{\Gamma}
+                   {\hastype{\hash{n}}
+                            {\hash{n+1}}}}
+\rsep
+\ruleh{Var}{\judge{\Gamma}{\hastype{A}{s}}}
+           {\judge{\Gamma,\hastype{x}{A}}{\hastype{x}{A}}}
+\rsep
+\ruleh{Pi}
+    {\judge{\Gamma}{\hastype{A}{s}} \seph
+     \judge{\Gamma,\hastype{x}{A}}{\hastype{B}{t}}}
+    {\judge{\Gamma}{\hastype{(x\dc A)\fun B}{t}}}
+\rsep
+\ruleh{Lam}
+    {\judge{\Gamma,\hastype{x}{A}}{\hastype{b}{B}} \seph 
+     \judge{\Gamma}{\hastype{(x\dc A)\fun B}{t}}}
+    {\judge{\Gamma}{\hastype{\lam(x\dc A)\fun b}{(x\dc A)\fun B}}}
+\rsep
+\ruleh{App}{\judge{\Gamma}{\hastype{f}{(x\dc A)\fun B}} \seph \judge{\Gamma}{\hastype{a}{A}}}
+           {\judge{\Gamma}{\hastype{f\;a}{\subst{B}{x}{a}}}}
+\rsep
+\ruleh{Data}
+    {\judge{\Gamma}{\hastype{A_1}{\hash{1}}} \seph \ldots \seph
+     \judge{\Gamma}{\hastype{A_n}{\hash{1}}}}
+    {\judge{\Gamma}{\hastype{\;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n }{\hash{1}}}}
+\rsep
+\ruleh{Con}
+    {\judge{\Gamma}{\hastype{T}{s}}}
+    {\judge{\Gamma}{\hastype{C_k$\te{@}$T}{A_k \fun T}}}
+where $T \equiv \;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n$
+
+\rsep
+\ruleh{Case}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{x}{\;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n}} \\
+\judget{\Gamma,\hastype{x_1}{A_1}}{\hastype{e_1}{\subst{A}{x}{C_1\;x_1}}} \\
+&\vdots&\\
+\judget{\Gamma,\hastype{x_n}{A_n}}{\hastype{e_n}{\subst{A}{x}{C_n\;x_n}}} \\
+\end{array}
+}
+{\judge{\Gamma}
+  {\hastype{$\te{case}$\;x\;$\te{of}$\; C_1\;x_1 \fun e_1 \sm \ldots \sm C_n\;x_n \fun e_n }
+           {A}
+  }
+}
+\rsep
+\ruleh{Prod}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{A_1}{\hash{u_1}}} \\
+\judget{\Gamma,\;\hastype{l_1}{A_1}}{\hastype{A_2}{\hash{u_2}}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_{n-1}}{A_{n-1}}}{\hastype{A_n}{\hash{u_n}}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_n}{A_n}}{\hastype{e_j}{A_j}} \\
+& \vdots & \\
+\end{array}
+}
+{\judge{\Gamma}
+  {\hastype
+    {$\te{sig\{}$\; l_1 \dc A_1 \gamma_1 \sm \ldots l_n \dc A_n \gamma_n $\te{\}}$\;}
+    {\hash{min\{u_i\}}}
+  }
+}
+where all $\gamma_i$ are either empty or ``$= e_i$''\\
+
+\rsep
+\ruleh{Rec}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{A_1}{s_1}} \\
+\judget{\Gamma,\Delta}{\hastype{e_1}{A_1}} \\
+\judget{\Gamma,\;\hastype{l_1}{A_1}}{\hastype{A_2}{s_2}} \\
+\judget{\Gamma,\Delta}{\hastype{e_2}{A_2}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_{n-1}}{A_{n-1}}}{\hastype{A_n}{s_n}} \\
+\judget{\Gamma,\Delta}{\hastype{e_n}{A_n}}
+\end{array}
+}
+    {\judge{\Gamma}{
+\begin{array}{c}
+$\te{struct\{}$\; p_1\, a_1\, l_1 \dc A_1 \teq e_1 \sm \ldots  p_n\,a_n\,l_n \dc A_n \teq e_n $\te{\}}$\\
+\hastype{\mbox{}}{\;$\te{sig\{}$\; \ldots l_i \dc A_i \gamma_i \sm \ldots $\te{\}}$\;}
+\end{array}
+    }}
+where $l_i$ is present iff $p_i =\;$\te{public},\\
+$\gamma_i$ is ``$= e_i$'' if $a_i =\;$\te{concrete} otherwise empty\\
+$\Delta \equiv \hastype{l_1}{A_1 = e_1},\cdots,\hastype{l_n}{A_n = e_n}$
+
+\rsep
+\ruleh{Sel}
+    {\judge{\Gamma}{\hastype{e}{\;$\te{sig\{}$\; \ldots l_i \dc A_i \gamma_i \sm \ldots $\te{\}}$\;}}}
+    {\judge{\Gamma}{\hastype{e \dt l_i}{\subst{A_i}{\ldots,l_k}{e\dt l_k,\ldots} }}}
+
+\rsep
+
+\ruleh{Conv}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph
+     \judge{\Gamma}{\hastype{B}{s}} \seph
+     \judge{\Gamma}{\eq{A}{B}}}
+    {\judge{\Gamma}{\hastype{a}{B}}}
+\rsep
+\ruleh{Weak}
+    {\judge{\Gamma}{\hastype{A}{s}} \seph
+     \judge{\Gamma}{\delta}}
+    {\judge{\Gamma,\hastype{x}{A}}{\delta}}
+\rsep
+\ruleh{WeakE}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph
+     \judge{\Gamma,\hastype{x}{A}}{\delta}}
+    {\judge{\Gamma,\hastype{x}{A = a}}{\delta}}
+\rsep
+
+\newpage
+\foilhead{Type erasure}
+
+\begin{tabular}{rcl}
+$($\bs$(x\dc t)\fun f)^*$ & $\rightarrow$ & \bs$x\fun f^*$, if $t\in\;$\te{\#} \\
+$($\bs$(x\dc t)\fun f)^*$ & $\rightarrow$ & $f^*$, if $t\notin\;$\te{\#}  \\
+$(f\;e)^*$ & $\rightarrow$ & $f^*\;e^*$, if $e\in t$ and $t\in\;$\te{\#} \\
+$(f\;e)^*$ & $\rightarrow$ & $f^*$, if $e\in t$ and $t\notin\;$\te{\#} \\
+$((x\dc t)\fun f)^*$ & $\rightarrow$ & $\perp$ \\
+
+\te{struct\{}$\;l_1\dc t_1\teq e_1\sm \ldots\;l_n\dc t_n\teq e_n$\te{\}}$^*$ & $\rightarrow$ 
+        & \te{struct\{}$\ldots\;l_k\teq e_k^*\ldots$\te{\}}, where $l_k$ is kept iff $t_k\in\;$\te{\#} \\
+$(e\dt l)^*$ & $\rightarrow$ & $e^*\dt l$ \\
+\te{sig\{} $\;\ldots\;$ \te{\}} & $\rightarrow$ & $\perp$ \\
+
+$(C$\te{@}$t)^*$ & $\rightarrow$ & $C$ \\
+$($\te{case}$\;e\;$\te{of}$\;C_1\;x_1\fun \;e_1\sm \ldots\;C_n\;x_n\fun \;e_n)^*$ & $\rightarrow$ 
+        & \te{case}$\;e^*\;$\te{of}$\;C_1\fun \;e_1^*\sm \ldots\;C_n\fun \;e_n^*$ \\
+\te{data}$\;\ldots\;^*$ & $\rightarrow$ & $\perp$ \\
+
+\te{\#}$^*$ & $\rightarrow$ & $\perp$ \\
+$x^*$ & $\rightarrow$ & $x$, if $x\in t, t\in\;$\te{\#} \\
+$x^*$ & $\rightarrow$ & $\perp$, if $x\in t, t\notin\;$\te{\#} \\
+
+\end{tabular}
+
+\newpage
+\foilhead{Evaluation rules}
+
+\begin{tabular}{rcl}
+\eval{\te{(}\bs$x\dc t\fun f$\te{)}$e$} {$\subst{f}{x}{e}$}
+\eval{$e\dt l_k$} {$\subst{e_k}{\ldots,l_k}{e\dt l_k,\ldots}$}
+\multicolumn{3}{c}{where $e \equiv$ \te{struct\{}$\ldots\;$\te{public}$\;a_k\;l_k\dc t_k\teq e_k\sm \ldots $\te{\}}} \\
+\eval{\te{case}$\;C_k$\te{@}$t\;e\;$\te{of}$\;\ldots\;C_k\;x_k\fun\;e_k\sm\ldots$} { $\subst{e_k}{x_k}{e}$ }
+\end{tabular}
+
+\vspace*{10mm}
+
+\begin{tabular}{rcl}
+\evalu{\te{(}\bs$x\fun f$\te{)}$e$} {$\subst{f}{x}{e}$}
+\evalu{$e\dt l_k$} {$\subst{e_k}{\ldots,l_k}{e\dt l_k,\ldots}$}
+\multicolumn{3}{c}{where $e \equiv$ \te{struct\{}$\ldots\;a_k\;l_k\teq e_k\sm \ldots $\te{\}}} \\
+\evalu{\te{case}$\;C_k\;e\;$\te{of}$\;\ldots\;C_k\;x_k\fun\;e_k\sm\ldots$} 
+  { $\subst{e_k}{x_k}{e}$ }
+\end{tabular}
+
+
+\end{document}

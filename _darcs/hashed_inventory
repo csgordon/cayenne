@@ -1,0 +1,30 @@
+pristine:308eeb8125d9365c4657a59fdb600681d1f5f73daa40442f000aab632d3f92d2
+Starting with inventory:
+0000000381-e19b2d378cb45fa9011c4dec23992737e04627dcacfa17334f395e3d175b5b16
+[TAG nov-07-2
+lennart@augustsson.net**20061114131243] 
+hash: 0000000178-63588128a9337c41b8c1bec8d2b755498e12b5595209ea9a8075c2f227189eb7
+[Use HughesPJ library.
+lennart@augustsson.net**20080921134227] 
+hash: 0000032849-c0350bf6fe2f60ff8f0fa5d67acb32b38d236c2935eabeca08e5e89add75eccc
+[Get rid of string hashing.
+lennart@augustsson.net**20080921134322] 
+hash: 0000004983-8d20931872dcd20dd75f106cfa0cf4ea9a5dd7d1a4de263dfe5863f10991c522
+[New version.
+lennart@augustsson.net**20080921134408] 
+hash: 0000000158-aa21ce62219875a763091b818e9c919a9a276576d8df7a4f57d6378a6179a1bf
+[Rename logic.cy to xlogic.cy to avoid name clash on MacOS X.
+lennart@augustsson.net**20080921204132] 
+hash: 0000002068-3f09b2fd991b738a6272b1cbe19db25bae30d04de09ef27536dfff3ff8a9556e
+[Replace home grown libs with standard ones.
+lennart@augustsson.net**20080921212110] 
+hash: 0000022347-28e6a8047dd08f06c9b1a23f5b6eb6a6772166054075ac9d35c9147e04b6010e
+[Get rid of more hown grown libs.
+lennart@augustsson.net**20080921212721] 
+hash: 0000009004-a366599b515702349c3fb69be39bb116db68364264da7783d64b1c800bd8dc22
+[Don't use H98 modules.
+lennart@augustsson.net**20080921214058] 
+hash: 0000002563-28eb3ba9b47064b08b44d80e49d3a7d3a78979b50663a4414fc166c47559db96
+[Build library for test.
+lennart@augustsson.net**20080924172928] 
+hash: 0000000101-bb6a70efb39273bdcf6e3ce38819e5acd7832f1356f7e131ab8efa90e159fd75

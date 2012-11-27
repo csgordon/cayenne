@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Examples</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Examples</h1>
+Here are some complete sample programs.
+<p>
+Amore substantial example is <a href="interp.html">a typed interpreter</a>.
+<p>
+<h2>Some arithmetic and simple list functions.</h2>
+<pre>
+module example$main =
+#include Prelude
+
+let fac :: Int -> Int;
+    fac n =
+        if (n == 0) 1 (n * fac(n - 1));
+
+    fromTo :: Int -> Int -> List Int;
+    fromTo n m =
+        if (n <= m) 
+           (n : (fromTo (n+1) m)) 
+           Nil;
+in putStrLn (System$List.show show (map fac (fromTo 1 10)))
+
+
+</pre>
+<h2>A function with a dependent type.</h2>
+<pre>
+module example$taut =
+#include Prelude
+struct {
+data Nat = Zero | Succ Nat;
+
+concrete
+TautArg :: Nat -> #;
+TautArg (Zero)   = Bool;
+TautArg (Succ m) = Bool->TautArg m;
+
+taut :: (n::Nat) -> TautArg n -> Bool;
+taut (Zero)   x = x;
+taut (Succ m) x = taut m (x True) && taut m (x False);
+};
+module example$tauttest =
+#include Prelude
+open example$taut use Nat, Zero, Succ, taut, TautArg in
+
+let id :: Bool -> Bool;
+    id x = x;
+
+    implies :: Bool -> Bool -> Bool;
+    implies x y = not x || y;
+
+    fun :: Bool -> Bool -> Bool;
+    fun x y = implies x y || implies y x;
+in do Monad_IO
+      putStrLn (System$Bool.show (taut Zero True))
+      putStrLn (System$Bool.show (taut (Succ Zero) id))
+      putStrLn (System$Bool.show (taut (Succ (Succ Zero)) fun))
+
+
+</pre>
+<h2>Some abstract data types.</h2>
+<pre>
+module concrete example$STACK = sig {
+type Stack a;
+empty :: (a :: #) |-> Stack a;
+push :: (a :: #) |-> a -> Stack a -> Stack a;
+pop :: (a :: #) |-> Stack a -> Stack a;
+top :: (a :: #) |-> Stack a -> a;
+isEmpty :: (a :: #) |-> Stack a -> System$Bool.Bool;
+};
+module concrete example$QUEUE = sig {
+type Queue a;
+empty :: (a :: #) |-> Queue a;
+enqueue :: (a :: #) |-> a -> Queue a -> Queue a;
+dequeue :: (a :: #) |-> Queue a -> Queue a;
+first :: (a :: #) |-> Queue a -> a;
+};
+module example$StackL :: example$STACK =
+#include Prelude
+struct {
+abstract type Stack a = List a;
+
+empty :: (a :: #) |-> Stack a;
+empty |a = Nil |a;
+
+push :: (a :: #) |-> a -> Stack a -> Stack a;
+push x xs = x : xs;
+
+pop :: (a :: #) |-> Stack a -> Stack a;
+pop xs =
+    case xs of {
+    (Nil) -> error "pop";
+    (_ : xs') -> xs';
+    };
+
+top :: (a :: #) |-> Stack a -> a;
+top xs =
+    case xs of {
+    (Nil) -> error "top";
+    (x : _) -> x;
+    };
+
+isEmpty :: (a :: #) |-> Stack a -> Bool;
+isEmpty xs =
+    case xs of {
+    (Nil) -> True;
+    (_ : _) -> False;
+    };
+};
+module example$StackToQueue :: example$STACK -> example$QUEUE =
+\ (s :: example$STACK) ->
+#include Prelude
+open s use Stack, push, pop, top, isEmpty in
+struct {
+abstract type Queue a = Stack a;
+
+empty :: (a :: #) |-> Queue a;
+empty |a = s.empty|a;
+
+enqueue :: (a :: #) |-> a -> Queue a -> Queue a;
+enqueue x xs = app xs x;
+
+dequeue :: (a :: #) |-> Queue a -> Queue a;
+dequeue xs = pop xs;
+
+first :: (a :: #) |-> Queue a -> a;
+first xs = top xs;
+
+private 
+app :: (a :: #) |-> Stack a -> a -> Stack a;
+app |a xs y =
+    if (isEmpty xs) 
+       (push y (s.empty|a))
+       (push (top xs) (app (pop xs) y));
+};
+module example$usestack = 
+#include Prelude
+open example$StackToQueue example$StackL use enqueue, first, empty in
+putStrLn (show (first (enqueue 1 (enqueue 2 empty))))
+
+</pre>
+
+<h2>The List monad</h2>
+<pre>
+module foo$monad = 
+#include Prelude
+let xys = do Monad_List
+             (x::Int) &lt;- 2 : 3 : Nil
+             (y::Int) &lt;- 4 : 5 : Nil
+             return (x*y)
+in  putStrLn (System$List.show show xys)
+</pre>
+
+<h2>Printf</h2>
+<pre>
+module example$printf =
+#include Prelude
+struct
+concrete
+PrintfType :: String -> #
+PrintfType (Nil)          = String
+PrintfType ('%':('d':cs)) = Int    -> PrintfType cs
+PrintfType ('%':('s':cs)) = String -> PrintfType cs
+PrintfType ('%':( _ :cs)) =           PrintfType cs
+PrintfType ( _ :cs)       =           PrintfType cs
+
+private 
+printf' :: (fmt::String) -> String -> PrintfType fmt
+printf' (Nil)          out = out
+printf' ('%':('d':cs)) out = \ (i::Int)    -> printf' cs (out ++ show i)
+printf' ('%':('s':cs)) out = \ (s::String) -> printf' cs (out ++ s)
+printf' ('%':( c :cs)) out =                  printf' cs (out ++ c : Nil)
+printf' (c:cs)         out =                  printf' cs (out ++ c : Nil)
+
+printf :: (fmt::String) -> PrintfType fmt
+printf fmt = printf' fmt Nil
+</pre>
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Fri Jan  8 16:42:38 CET 1999
+<!-- hhmts end -->
+</body> </html>

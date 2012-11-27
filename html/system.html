@@ -1,0 +1,622 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>System modules</title>
+</head>
+
+<body background="peppers.gif">
+<h1>System modules</h1>
+There are a number of system modules containing commonly used types
+and functions.  Some of these modules written entirely in Cayenne, some (like the
+Int module) are not.
+<p>
+All the signatures below should be read as if in the context
+<pre>
+let String = System$String.String
+    Char = System$Char.Char
+    Int = System$Int.Int
+    Bool = System$Bool.Bool
+    List = System$List.List
+    Unit = System$Unit.Unit
+    Pair = System$Tuples.Pair
+in
+</pre>
+
+<h2>Bool</h2>
+<pre>
+System$Bool ::
+sig {
+  data Bool = False | True;
+  if :: (a :: #) |-> Bool -> a -> a -> a;
+  (&&) :: Bool -> Bool -> Bool;
+  (||) :: Bool -> Bool -> Bool;
+  not :: Bool -> Bool;
+  show :: Bool -> String;
+};
+</pre>
+<h2>Char</h2>
+<pre>
+System$Char ::
+sig {
+  type Char = System$CharType.Char;
+  native (/=) :: Char ->
+		 Char ->
+		 Bool = "\\x -> \\y -> x /= (y::Char)";
+  native (&lt;) :: Char ->
+		Char ->
+		Bool = "\\x -> \\y -> x &lt; (y::Char)";
+  native (&lt;=) :: Char ->
+		 Char ->
+		 Bool = "\\x -> \\y -> x &lt;= (y::Char)";
+  native (==) :: Char ->
+		 Char ->
+		 Bool = "\\x -> \\y -> x == (y::Char)";
+  native (>) :: Char ->
+		Char ->
+		Bool = "\\x -> \\y -> x > (y::Char)";
+  native (>=) :: Char ->
+		 Char ->
+		 Bool = "\\x -> \\y -> x >= (y::Char)";
+  native chr :: Int ->
+		Char = "\\x -> (toEnum x)::Char";
+  native ord :: Char ->
+		Int = "\\x -> fromEnum (x::Char)";
+  isAlpha :: Char -> Bool;
+  isAlphaNum :: Char -> Bool;
+  isDigit :: Char -> Bool;
+  isLower :: Char -> Bool;
+  isSpace :: Char -> Bool;
+  isSymbol :: Char -> Bool;
+  isUpper :: Char -> Bool;
+  show :: Char -> String;
+};
+</pre>
+<h2>CharType</h2>
+<pre>
+System$CharType ::
+sig { type Char; };
+</pre>
+<h2>Double</h2>
+<pre>
+System$Double ::
+sig {
+  native (*) :: Double ->
+		Double ->
+		Double = "\\x -> \\y -> x*(y::Double)";
+  native (+) :: Double ->
+		Double ->
+		Double = "\\x -> \\y -> x+(y::Double)";
+  native (-) :: Double ->
+		Double ->
+		Double = "\\x -> \\y -> x-(y::Double)";
+  native (/) :: Double ->
+		Double ->
+		Double = "\\x -> \\y -> x/(y::Double)";
+  native (/=) :: Double ->
+		 Double ->
+		 Bool = "\\x -> \\y -> x/=(y::Double)";
+  native (&lt;) :: Double ->
+		Double ->
+		Bool = "\\x -> \\y -> x&lt;(y::Double)";
+  native (&lt;=) :: Double ->
+		 Double ->
+		 Bool = "\\x -> \\y -> x&lt;=(y::Double)";
+  native (==) :: Double ->
+		 Double ->
+		 Bool = "\\x -> \\y -> x==(y::Double)";
+  native (>) :: Double ->
+		Double ->
+		Bool = "\\x -> \\y -> x>(y::Double)";
+  native (>=) :: Double ->
+		 Double ->
+		 Bool = "\\x -> \\y -> x>=(y::Double)";
+  negate :: Double -> Double;
+  type Double;
+  read :: String -> Double;
+  show :: Double -> String;
+};
+</pre>
+<h2>Either</h2>
+<pre>
+System$Either ::
+sig {
+  data Either a b = Left a | Right b;
+  either ::
+    (a :: #) |->
+    (b :: #) |->
+    (c :: #) |->
+    (a -> c) ->
+    (b -> c) ->
+    Either a b ->
+    c;
+  show ::
+    (a :: #) |->
+    (b :: #) |->
+    (a -> String) ->
+    (b -> String) ->
+    Either a b ->
+    String;
+};
+</pre>
+<h2>Error</h2>
+<pre>
+System$Error ::
+sig {
+  type Error (_ :: String);
+  ErrorT :: String -> #1;
+  type Undefined;
+  UndefinedT :: #1;
+  error :: (a :: #) |-> String -> a;
+  undefined :: (a :: #) |-> a;
+};
+</pre>
+<h2>HO</h2>
+<pre>
+System$HO ::
+sig {
+  const :: (a :: #) |-> (b :: #) |-> a -> b -> a;
+  curry ::
+    (a :: #) |->
+    (b :: #) |->
+    (c :: #) |->
+    (Char a b -> c) ->
+    a ->
+    b ->
+    c;
+  flip ::
+    (a :: #) |->
+    (b :: #) |->
+    (c :: #) |->
+    (a -> b -> c) ->
+    b ->
+    a ->
+    c;
+  id :: (a :: #) |-> a -> a;
+  uncurry ::
+    (a :: #) |->
+    (b :: #) |->
+    (c :: #) |->
+    (a -> b -> c) ->
+    Char a b ->
+    c;
+  (·) ::
+    (a :: #) |->
+    (b :: #) |->
+    (c :: #) |->
+    (b -> c) ->
+    (a -> b) ->
+    a ->
+    c;
+};
+</pre>
+<h2>IO</h2>
+<pre>
+System$IO ::
+sig {
+  type FilePath = String;
+  data IOMode =
+  ReadMode | WriteMode | AppendMode | ReadWriteMode;
+  type Handle;
+  type IO _;
+  type IOError;
+  Monad_IO :: System$Monad IO;
+  catch :: (a :: #) |-> IO a -> (IOError -> IO a) -> IO a;
+  exitWith :: Int -> IO Unit;
+  getArgs :: IO (List String);
+  getLine :: IO String;
+  hClose :: Handle -> IO Unit;
+  hGetChar :: Handle -> IO Char;
+  hGetContents :: Handle -> IO String;
+  hPutChar ::
+    Handle -> Char -> IO Unit;
+  hPutStr ::
+    Handle -> String -> IO Unit;
+  interact ::
+    (String -> String) ->
+    IO Unit;
+  ioError :: (a :: #) |-> IOError -> IO a;
+  openFile :: FilePath -> IOMode -> IO Handle;
+  putStr :: String -> IO Unit;
+  putStrLn :: String -> IO Unit;
+  readFile :: FilePath -> IO String;
+  stderr :: Handle;
+  stdin :: Handle;
+  stdout :: Handle;
+  userError :: String -> IOError;
+  writeFile ::
+    FilePath -> String -> IO Unit;
+};
+</pre>
+<h2>Id</h2>
+<pre>
+System$Id ::
+let concrete (===) :: (a :: #) |-> a -> a -> # =
+	       \ (a :: #) |-> \ (_ :: a) -> \ (_ :: a) -> data refl;
+    concrete reflE :: (a :: #) |-> (x :: a) -> (===) |a x x =
+	       \ (a :: #) |-> \ (_ :: a) -> refl@(data refl);
+sig {
+  (===) :: (a :: #) |-> a -> a -> #;
+  congr ::
+	(a :: #) |->
+	(P :: (a -> #)) ->
+	(x :: a) ->
+	(y :: a) ->
+	(===) |a x y ->
+	P x ->
+	P y;
+  ext ::
+	(a :: #) |->
+	(b :: #) |->
+	(f :: (a -> b)) |->
+	(g :: (a -> b)) |->
+	((x :: a) -> (===) |b (f x) (g x)) ->
+	(===) |(a -> b) f g;
+  idPeel ::
+	(a :: #) |->
+	(C :: ((x :: a) -> (y :: a) -> (===) |a x y -> #)) ->
+	((x :: a) -> C x x (reflE |a x)) ->
+	(x :: a) ->
+	(y :: a) ->
+	(p :: (===) |a x y) ->
+	C x y p;
+  refl :: (a :: #) |-> (x :: a) |-> (===) |a x x;
+  subst ::
+	(a :: #) |->
+	(b :: #) |->
+	(x :: a) |->
+	(y :: a) |->
+	(f :: (a -> b)) ->
+	(===) |a x y ->
+	(===) |b (f x) (f y);
+  symm ::
+	(a :: #) |->
+	(x :: a) |->
+	(y :: a) |->
+	(===) |a x y ->
+	(===) |a y x;
+  trans ::
+	(a :: #) |->
+	(x :: a) |->
+	(y :: a) |->
+	(z :: a) |->
+	(===) |a x y ->
+	(===) |a y z ->
+	(===) |a x z;
+};
+</pre>
+<h2>Int</h2>
+<pre>
+System$Int ::
+sig {
+  native (*) :: Int ->
+		Int ->
+		Int = "\\x -> \\y -> x * y :: Int";
+  native (+) :: Int ->
+		Int ->
+		Int = "\\x -> \\y -> x + y :: Int";
+  native (-) :: Int ->
+		Int ->
+		Int = "\\x -> \\y -> x - y :: Int";
+  native (/=) :: Int ->
+		 Int ->
+		 Bool = "\\x -> \\y -> x /= (y :: Int)";
+  native (&lt;) :: Int ->
+		Int ->
+		Bool = "\\x -> \\y -> x &lt; (y :: Int)";
+  native (&lt;=) :: Int ->
+		 Int ->
+		 Bool = "\\x -> \\y -> x &lt;= (y :: Int)";
+  native (==) :: Int ->
+		 Int ->
+		 Bool = "\\x -> \\y -> x == (y :: Int)";
+  native (>) :: Int ->
+		Int ->
+		Bool = "\\x -> \\y -> x > (y :: Int)";
+  native (>=) :: Int ->
+		 Int ->
+		 Bool = "\\x -> \\y -> x >= (y :: Int)";
+  native even :: Int ->
+		 Bool = "\\x -> (x :: Int) `rem` 2 == 0";
+  negate :: Int -> Int;
+  native odd :: Int ->
+		Bool = "\\x -> (x :: Int) `rem` 2 == 1";
+  native quot :: Int ->
+		 Int ->
+		 Int = "\\x -> \\y -> x `quot` y :: Int";
+  native rem :: Int ->
+		Int ->
+		Int = "\\x -> \\y -> x `rem` y :: Int";
+  type Int;
+  read :: String -> Int;
+  show :: Int -> String;
+};
+</pre>
+<h2>Integer</h2>
+<pre>
+System$Integer ::
+sig {
+  type Integer;
+  (*) :: Integer -> Integer -> Integer;
+  (+) :: Integer -> Integer -> Integer;
+  (-) :: Integer -> Integer -> Integer;
+  (/=) :: Integer -> Integer -> Bool;
+  (&lt;) :: Integer -> Integer -> Bool;
+  (&lt;=) :: Integer -> Integer -> Bool;
+  (==) :: Integer -> Integer -> Bool;
+  (>) :: Integer -> Integer -> Bool;
+  (>=) :: Integer -> Integer -> Bool;
+  even :: Integer -> Bool;
+  negate :: Integer -> Integer;
+  odd :: Integer -> Bool;
+  quot :: Integer -> Integer -> Integer;
+  read :: String -> Integer;
+  rem :: Integer -> Integer -> Integer;
+  show :: Integer -> String;
+};
+</pre>
+<h2>List</h2>
+<pre>
+System$List ::
+sig {
+  data List a = Nil | (:) a (List a);
+  (++) :: (a :: #) |-> List a -> List a -> List a;
+  Monad_List :: System$Monad List;
+  concat :: (a :: #) |-> List (List a) -> List a;
+  drop :: (a :: #) |-> Int -> List a -> List a;
+  elem ::
+	(a :: #) |->
+	(a -> a -> Bool) ->
+	a ->
+	List a ->
+	Bool;
+  equal ::
+	(a :: #) |->
+	(a -> a -> Bool) ->
+	List a ->
+	List a ->
+	Bool;
+  filter ::
+	(a :: #) |-> (a -> Bool) -> List a -> List a;
+  foldr ::
+	(a :: #) |-> (b :: #) |-> (a -> b -> b) -> b -> List a -> b;
+  head :: (a :: #) |-> List a -> a;
+  intersperse :: (a :: #) |-> a -> List a -> List a;
+  length :: (a :: #) |-> List a -> Int;
+  map ::
+	(a :: #) |-> (b :: #) |-> (a -> b) -> List a -> List b;
+  null :: (a :: #) |-> List a -> Bool;
+  reverse :: (a :: #) |-> List a -> List a;
+  show ::
+	(a :: #) |->
+	(a -> String) ->
+	List a ->
+	String;
+  tail :: (a :: #) |-> List a -> List a;
+  take :: (a :: #) |-> Int -> List a -> List a;
+  zip ::
+	(a :: #) |->
+	(b :: #) |->
+	List a ->
+	List b ->
+	List (Pair a b);
+  zipWith ::
+	(a :: #) |->
+	(b :: #) |->
+	(c :: #) |->
+	(a -> b -> c) ->
+	List a ->
+	List b ->
+	List c;
+};
+</pre>
+<h2>Logic</h2>
+<pre>
+System$Logic ::
+sig {
+  data (/\) a b = (&) a b;
+  type (&lt;=>) a b = sig { impL :: b -> a; impR :: a -> b; };
+  data Absurd = ;
+  type Lift (_10112 :: Bool) =
+    case _10112 of {
+    (False) ->  Absurd; (True) ->  Truth;
+};
+  LiftBin ::
+    (a :: #) |-> (a -> a -> Bool) -> a -> a -> # =
+    \ (a :: #) |->
+    \ (op :: (a -> a -> Bool)) ->
+    \ (x :: a) -> \ (y :: a) -> Lift (op x y);
+  data Truth = truth;
+  data (\/) a b = Inl a | Inr b;
+  absurd :: (a :: #) |-> Absurd -> a;
+};
+</pre>
+<h2>Maybe</h2>
+<pre>
+System$Maybe ::
+sig {
+  data Maybe a = Nothing | Just a;
+  Monad_Maybe :: System$Monad Maybe;
+  fromJust :: (a :: #) |-> Maybe a -> a;
+  maybe ::
+    (a :: #) |-> (b :: #) |-> b -> (a -> b) -> Maybe a -> b;
+  show ::
+    (a :: #) |->
+    (a -> String) ->
+    Maybe a ->
+    String;
+};
+</pre>
+<h2>Monad</h2>
+<pre>
+System$Monad (m :: (# -> #)) :: #1.0 =
+  sig {
+    (>>) :: (a :: #) |-> (b :: #) |-> m a -> m b -> m b;
+    (>>=) :: (a :: #) |-> (b :: #) |-> m a -> (a -> m b) -> m b;
+    return :: (a :: #) |-> a -> m a;
+  };
+</pre>
+<h2>MonadUtil</h2>
+<pre>
+System$MonadUtil ::
+sig {
+  Monad :: #1.0 = sig { type m _; o :: System$Monad m; };
+  join :: (M :: Monad) -> (a :: #) |-> M.m (M.m a) -> M.m a;
+};
+</pre>
+<h2>Nat</h2>
+<pre>
+System$Nat ::
+let concrete False :: Bool = System$Bool.False;
+    concrete True :: Bool = System$Bool.True;
+sig {
+  data Nat = Zero | Succ Nat;
+  (+) (_10097 :: Nat) (m :: Nat) :: Nat =
+	case _10097 of {
+	(Succ n) ->  Succ ((+) n m); (Zero) ->  m;
+	};
+  (==) (_10103 :: Nat) (_10104 :: Nat) :: Bool =
+	case _10103 of {
+	(Succ n) -> 
+	  case _10104 of {
+	  (Succ m) ->  (==) n m; _ ->  False;
+	  };
+	(Zero) -> 
+	  case _10104 of {
+	  (Zero) ->  True; _ ->  False;
+	  };
+	};
+  fromInteger :: System$Integer.Integer -> Nat;
+  toInt :: Nat -> Int;
+  toInteger :: Nat -> System$Integer.Integer;
+};
+</pre>
+<h2>Num</h2>
+<pre>
+System$Num ::
+let concrete Zero :: System$Nat.Nat = System$Nat.Zero;
+    concrete Succ :: System$Nat.Nat -> System$Nat.Nat =
+	       System$Nat.Succ;
+sig {
+  data Num = NonNeg System$Nat.Nat | Neg System$Nat.Nat;
+  minusone ::
+	data NonNeg System$Nat.Nat | Neg System$Nat.Nat =
+	neg one;
+  minustwo ::
+	data NonNeg System$Nat.Nat | Neg System$Nat.Nat =
+	neg two;
+  one :: data NonNeg System$Nat.Nat | Neg System$Nat.Nat =
+	succ zero;
+  two :: data NonNeg System$Nat.Nat | Neg System$Nat.Nat =
+	succ one;
+  zero :: data NonNeg System$Nat.Nat | Neg System$Nat.Nat =
+	NonNeg Zero;
+  (+) (_11370 :: Num) (_11371 :: Num) :: Num =
+	case _11370 of {
+	(Neg n) -> 
+	  case _11371 of {
+	  (Neg m) ->  Neg (System$Nat.(+) (Succ n) (Succ m));
+	  (NonNeg m) ->  sub m (Succ n);
+	  };
+	(NonNeg n) -> 
+	  case _11371 of {
+	  (Neg m) ->  sub n (Succ m);
+	  (NonNeg m) ->  NonNeg (System$Nat.(+) n m);
+	  };
+	};
+  (-) (_12823 :: Num) (_12824 :: Num) :: Num =
+	case _12823 of {
+	(Neg n) -> 
+	  case _12824 of {
+	  (Neg m) ->  sub (Succ m) (Succ n);
+	  (NonNeg m) ->  Neg (System$Nat.(+) (Succ n) m);
+	  };
+	(NonNeg n) -> 
+	  case _12824 of {
+	  (Neg m) ->  NonNeg (System$Nat.(+) n (Succ m));
+	  (NonNeg m) ->  sub n m;
+	  };
+	};
+  neg (n :: Num) :: Num =
+	case n of {
+	(Neg n) ->  NonNeg (Succ n);
+	(NonNeg _14478) -> 
+	  case _14478 of {
+	  (Succ n) ->  Neg n; _ ->  n;
+	  };
+	};
+  sub (_10640 :: System$Nat.Nat) (_10641 :: System$Nat.Nat) ::
+	Num =
+	case _10640 of {
+	(Succ n) -> 
+	  case _10641 of {
+	  (Succ m) ->  sub n m; (Zero) ->  NonNeg (Succ n);
+	  };
+	(Zero) -> 
+	  case _10641 of {
+	  (Succ n) ->  Neg n; (Zero) ->  NonNeg Zero;
+	  };
+	};
+  succ :: Num -> Num = (+) (NonNeg (Succ Zero));
+  toInt :: Num -> Int;
+};
+</pre>
+<h2>String</h2>
+<pre>
+System$String ::
+let type List a = data Nil | (:) a (List a);
+sig { type String = List System$CharType.Char; };
+</pre>
+<h2>StringUtil</h2>
+<pre>
+System$StringUtil ::
+sig {
+  (==) ::
+    String ->
+    String ->
+    Bool;
+};
+</pre>
+<h2>Trace</h2>
+The System$Trace module contains a side effecting function that prints
+its first argument and returns the second.  It is intended for debugging.
+<pre>
+System$Trace ::
+sig {
+  trace :: (a :: #) |-> String -> a -> a;
+};
+</pre>
+<h2>Tuples</h2>
+<pre>
+System$Tuples ::
+sig {
+  data Pair a b = (,) a b;
+  fst :: (a :: #) |-> (b :: #) |-> Pair a b -> a;
+  show ::
+    (a :: #) |->
+    (b :: #) |->
+    (a -> String) ->
+    (b -> String) ->
+    Pair a b ->
+    String;
+  snd :: (a :: #) |-> (b :: #) |-> Pair a b -> b;
+};
+</pre>
+<h2>Unit</h2>
+<pre>
+System$Unit ::
+sig {
+  data Unit = unit; show :: Unit -> String;
+};
+</pre>
+<h2>Void</h2>
+<pre>
+System$Void ::
+sig { type Void; void :: (a :: #) |-> Void -> a; };
+</pre>
+
+<p><a href="doc.html"><img src="back.gif">Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Thu Aug 25 23:11:51 CEST 2005
+<!-- hhmts end -->
+</body> </html>

@@ -1,0 +1,2 @@
+cayenne: Compilation errors:
+"err1b.cy", line 1, column 19, Syntax error: found token ")", expected "{"

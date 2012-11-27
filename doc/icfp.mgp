@@ -1,0 +1,623 @@
+%tab 1 size 4, vgap 40, prefix "  ", icon box green 50
+%tab 2 size 4, vgap 40, prefix "      ", icon arc red 50
+%tab 3 size 3, vgap 40, prefix "            ", icon arc white 40
+%default 1 fore blue, size 5, xfont "utopia-bold-r", back "seashell1", center, bimage "peppers.gif"
+%default 2 fore black, size 4, xfont "utopia-bold-r", back "seashell1", leftfill
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+
+%fore "red", size 10
+%center, fore "red"
+%image "cayenne1.jpg"
+%pause
+%size 6, fore "orange"
+%mark
+Constructive Type Theory for Dummies
+
+
+%size 4, fore "black"
+Lennart Augustsson
+Chalmers University of Technology
+Göteborg, Sweden
+%size 3
+augustss@cs.chalmers.se
+
+
+%size 3, fore "blue"
+This presentation does not involve any Microsoft® products.
+%pause
+%size 6, fore red
+%again
+%rcutin
+                         X X X X X X X
+                        by Dummy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Overview
+%fore "black", size 4
+%left
+%fore red
+Cayenne
+%cont, fore black
+ is an experiment in language design.  
+It has
+	dependent types
+	explicit polymorphism
+	powerful records
+	a simple (Java-inspired) module system
+	Haskell-like syntax
+
+It does not have
+	overloading
+	classes
+	type deduction
+	decidable type checking
+	...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: printf
+%fore red
+This is not correct Haskell!
+%xfont "courier-bold-r", fore black, size 3
+-- Haskell version
+printf fmt = pr fmt "" where
+ pr ""          res = res
+ pr ('%':'d':s) res = \i -> pr s (res ++ show i)
+ pr ('%':'s':s) res = \s -> pr s (res ++ s)
+ pr ('%': c :s) res =       pr s (res ++ [c])
+ pr (     c :s) res =       pr s (res ++ [c])
+
+
+printf "%d(%d)" :: Int -> Int -> String
+printf "hello %s!" :: String -> String
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: printf, cont'd
+%xfont "courier-bold-r", fore black, size 3
+-- Cayenne version
+PrintfType :: String -> #
+PrintfType ""           = String
+PrintfType ('%':'d':cs) = Int    -> PrintfType cs
+PrintfType ('%':'s':cs) = String -> PrintfType cs
+PrintfType ('%': _ :cs) =           PrintfType cs
+PrintfType ( _ :cs)     =           PrintfType cs
+
+printf :: (fmt::String) -> PrintfType fmt
+printf fmt = pr fmt ""
+
+pr :: (fmt::String) -> String -> PrintfType fmt
+pr ""           res = res
+pr ('%':'d':cs) res = \ (i::Int)    -> pr cs (res ++ show i)
+pr ('%':'s':cs) res = \ (s::String) -> pr cs (res ++ s)
+pr ('%': c :cs) res = pr cs (res ++ [c])
+pr (c:cs)       res = pr cs (res ++ [c])
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: Set of Int
+%fore red
+This is not correct Haskell!
+%xfont "courier-bold-r", fore black, size 3
+data IntSet = IntSet { 
+    type T,
+    empty :: T,
+    singleton :: Int->T,
+    union :: T->T->T,
+    member :: Int->T->Bool
+    }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: Set of Int, cont'd
+%xfont "courier-bold-r", fore black, size 3
+type IntSet = sig
+    type T
+    empty :: T
+    singleton :: Int->T
+    union :: T->T->T
+    member :: Int->T->Bool
+
+%pause
+naïveSet :: IntSet
+naïveSet = struct
+    abstract type T = Int->Bool
+    empty x = False
+    singleton x x' = x == x'
+    union s t x = s x || t x
+    member x s = s x
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Cayenne type formers
+
+Cayenne has a small number of ways to form types:
+	type of types
+	(dependent) functions
+	data types, sums
+	(dependent) records, products
+
+Value and type expressions are not distinguished.
+
+Cayenne uses structural equality on types.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+The type of types
+
+In Cayenne the type of a type is denoted by
+%cont, xfont "courier-bold-r"
+ #
+
+
+%xfont "courier-bold-r"
+Int   :: #
+Bool  :: #
+Maybe :: # -> #
+Pair  :: # -> # -> #
+
+ # :: #1 :: #2 :: #3 ...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Functions
+
+Value                                          Type
+%xfont "courier-bold-r"
+\ (x :: t) -> e       (x :: t) -> s
+
+%xfont "utopia-bold-r"
+if e has type s
+
+%xfont "utopia-bold-r"
+Note that x may occur in s.
+
+%fore blue
+Shorthand
+%fore black
+If the variable does not occur at the right of the arrow in a type \
+we omit the variable.
+%xfont "courier-bold-r"
+
+t -> s
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Functions, cont'd
+%fore blue
+Shorthand
+%fore black
+In definitions (which we will cover later) functions can be written \
+in the usual Haskell style with a signature and equations with \
+pattern matching.
+
+%xfont "courier-bold-r", size 4
+not :: Bool -> Bool
+not (True) = False
+not (False) = True
+
+id :: (a :: #) -> a -> a
+id a x = x
+
+    ... id Int 5 ... id Bool True ...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Functions, hidden arguments
+%xfont "utopia-bold-r", size 4
+Consider the function
+%xfont "courier-bold-r", size 3
+if :: (a :: #) -> Bool -> a -> a -> a
+if a (True)  t f = t
+if a (False) t f = f
+
+   ... if Int b 1 5 ...
+
+%xfont "utopia-bold-r", size 4
+Writing the Int argument is really tedious; this type should be obvious \
+from the other arguments.
+
+%pause
+Cayenne has a simple device, called hidden arguments, that can be \
+used to omit certain arguments.
+%xfont "courier-bold-r", size 3
+
+if :: (a :: #) |-> Bool -> a -> a -> a
+if (True)  t f = t
+if (False) t f = f
+
+   ... if b 1 5 ...
+%xfont "utopia-bold-r", size 4
+or
+%xfont "courier-bold-r", size 3
+   ... if |Int b 1 5 ...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Data types (sums)
+Data looks similar to data types in Haskell, but they do not need \
+to be named.
+
+%xfont "courier-bold-r"
+data C1 t1 t2 ... | C2 ...
+
+%xfont "utopia-bold-r"
+Examples
+%xfont "courier-bold-r"
+data False | True
+data Nothing | Just a
+data Zero | Succ Nat
+
+%pause
+%xfont "utopia-bold-r"
+Types can, of course, be named
+%xfont "courier-bold-r"
+Bool :: #
+Bool = data False | True
+Maybe :: # -> #
+Maybe a = data Nothing | Just a
+Nat :: #
+Nat = data Zero | Succ Nat
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Data types, constructors
+	Contructors are written in a funny way in expressions, C@T.
+	Constructor names do not have to be unique, and they do not \
+live in the same name space as ordinary variables.
+	Constructors names do not have to be capitalized.
+
+%xfont "courier-bold-r"
+ ... True@(data False | True) ...
+
+ ... True@Bool ...
+
+%fore red
+ ... True ...    -- wrong, True is not defined
+%fore black
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Data types, constructors, con'td
+As a shorthand a notation similar to Haskell's can be used:
+
+%xfont "courier-bold-r"
+data Bool = False | True
+%xfont "utopia-bold-r", fore blue
+
+Shorthand
+%xfont "courier-bold-r", fore black
+
+Bool :: #
+Bool = data False | True
+
+False :: Bool
+False = False@Bool
+
+True :: Bool
+True = True@Bool
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Data types, case
+	A value in a data type can be examined and taken apart with a \
+case expression, just as in Haskell.
+	Constructors need to be in parenthesis.
+	Pattern matching in function definitions is a shorthand for \
+a case expressions.
+%xfont "courier-bold-r", fore black
+
+null :: (a :: #) |-> List a -> Bool
+null l =
+    case l of
+    (Nil)   -> True
+    (_ : _) -> False
+
+last :: (a :: #) |-> List a -> a
+last (x : (Nil)) = x
+last (_ : xs)    = last xs
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, formation
+
+Value                                                  Type
+%xfont "courier-bold-r", size 3
+struct { x1 :: t1 = e1; ... }      sig { x1 :: t1; ... }
+
+%xfont "utopia-bold-r", size 4
+Examples
+%xfont "courier-bold-r", size 3
+struct  x :: Int = 5               sig  x :: Int
+          b :: Bool = True                b :: Bool
+%xfont "utopia-bold-r", size 4
+
+	Haskell style definitions can be used
+%xfont "courier-bold-r", size 3
+struct  x :: Int                   sig  x :: Int
+          x = 5                           b :: Bool
+          b :: Bool
+          b = True
+%xfont "utopia-bold-r", size 4
+
+All definitions in a struct are mutally recursive.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, selection
+Cayenne uses normal dot notation for record selection.
+%xfont "courier-bold-r", size 4
+   e.i
+%xfont "utopia-bold-r", size 4
+where e can be an arbitrary expression and i is a (visible) field \
+name of that record.
+
+%xfont "courier-bold-r", size 4
+let s = struct { x = 5; y = 8 }
+in  s.x + s.y
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, visibility
+When defining a record value each component can be given a visiblity, \
+private or public, that determines if it is visible outside or not. \
+The default is public.
+
+Value                                                  Type
+%xfont "courier-bold-r", size 3
+struct public  x :: Int = 5        sig x :: Int
+        private y :: Int = x+1          z :: Int
+        public  z :: Int = y+1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, manifest definitions
+Consider the following record and its signature.
+%xfont "courier-bold-r", size 3
+BOOL = sig
+    Bool :: #
+    False :: Bool
+    True :: Bool
+    not :: Bool -> Bool
+
+B :: BOOL
+B = struct 
+    data Bool = False | True
+    not :: Bool -> Bool
+    not (True) = False
+    not (False) = True
+
+%xfont "utopia-bold-r", size 4
+Is the following legal? (Outside the struct)
+
+%xfont "courier-bold-r", size 3
+case B.not B.True of
+(True)  -> 1
+(False) -> 2
+
+%xfont "utopia-bold-r", size 4, fore red
+NO, the fact that B.Bool is a data type is not known.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, manifest definitions, cont'd
+We need a way to make not only the type, but also the value of a \
+record component visible in the signature.
+The feature has many names: translucent sum, manifest definition, \
+(singleton kind) ...
+
+Value                                                  Type
+%xfont "courier-bold-r", size 3
+struct concrete  x :: Int = 5        sig x :: Int = 5
+        abstract  y :: Int = x+1          y :: Int
+
+%xfont "utopia-bold-r", size 4
+The default is abstract, except for type definitions \
+where the default is concrete.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Records, manifest definitions, cont'd
+Bool again.
+%xfont "courier-bold-r", size 3
+
+BOOL = sig
+    Bool :: # = data False | True
+    False :: Bool = False@Bool
+    True :: Bool = True@Bool
+    not :: Bool -> Bool
+
+B :: BOOL
+B = struct 
+    concrete data Bool = False | True
+    not :: Bool -> Bool
+    not (True) = False
+    not (False) = True
+
+%xfont "utopia-bold-r", size 4
+The "concrete" is really superfluous since it is the default.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+More sugar
+There some more syntactic constructs that can easily be translated \
+into the core language:
+%xfont "courier-bold-r", size 4
+	let
+	open
+	do
+%xfont "utopia-bold-r", size 4
+	record coercion
+
+
+Cayenne modules are simply ordinary values bound in a global namespace.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Undecidabilty
+Type checking of Cayenne is undecibable since types may involve \
+arbitrary terms, and the language has general recursion.
+Undecidable type checking means that the type checker might loop.
+
+The current implementation does not loop, but instead it has an upper \
+bound on the number of steps it can perform before giving up.
+
+So type checking can give three answers:
+	OK - the program will not go wrong at runtime
+	BAD - the program has a type error
+	DUNNO - the program might or might not be correct, but it has \
+been rejected
+
+%fore "dark green"
+In practice it seems to work quite well.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Cayenne as a logic
+The types is Cayenne are powerful enough to encode predicate logic \
+(using the Curry-Howard isomorphism).
+
+This means that program properties can be expressed as types \
+in Cayenne.
+
+A proof of a property is a term of the given type.
+
+%pause
+%size 6, fore red
+BUT
+%cont, fore black, size 4
+, the proofs cannot be trusted in general.
+Cayenne has general recursion, so it has bottom, which inhabits all types.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: Expressing properties
+%xfont "courier-bold-r", fore black, size 3
+data Exp 
+       = App Exp Exp
+       | Lam Sym Exp
+       | Var Sym
+##type Sym = System$String.String
+
+%xfont "utopia-bold-r"
+We want a predicate that says that there is no constructor Lam in an Exp expression.
+
+%xfont "courier-bold-r", fore black, size 3
+LamFree :: Exp -> #
+LamFree (App f a) = LamFree f /\ LamFree a
+LamFree (Lam _ _) = Absurd
+LamFree (Var _) = Truth
+
+data Absurd =
+
+data Truth = truth
+
+data (/\) a b = (&) a b
+
+absurd :: (a :: #) |-> Absurd -> a
+absurd i = case i of { }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: Expressing properties, cont'd
+%xfont "courier-bold-r", fore black, size 3
+type LamFreeExp = sig exp :: Exp
+                          lf  :: LamFree exp
+
+abstractVars :: Exp -> LamFreeExp
+%pause
+abstractVars e@(Var _) = struct { exp = e; lf = truth }
+abstractVars (App f a) =
+    let f' = abstractVars f
+         a' = abstractVars a
+    in  struct exp = App f'.exp a'.exp
+                 lf  = f'.lf & a'.lf
+abstractVars (Lam x e) =
+    let e' = abstractVars e
+    in  abstractVar x e'.exp e'.lf
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: Expressing properties, cont'd
+%xfont "courier-bold-r", fore black, size 3
+abstractVar :: Sym -> (e :: Exp) -> LamFree e -> LamFreeExp
+abstractVar s (App f a) (lf & la) =
+    let f' = abstractVar s f lf
+         a' = abstractVar s a la
+    in  struct exp = App (App S f'.exp) a'.exp
+                 lf  = (truth & f'.lf) & a'.lf
+abstractVar s (Lam _ _) l = absurd l
+abstractVar s e@(Var x) l = 
+    if (s == x)
+       (struct {exp = I; lf :: LamFree exp = truth})
+       (struct {exp = App K e; lf :: LamFree exp = truth & l})
+
+S = Var "S"
+K = Var "K"
+I = Var "I"
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Example: An interpreter
+It is possible to write an interpreter that does not use a sum type \
+as result its type.
+
+%xfont "courier-bold-r", fore black, size 3
+interp :: (e :: Exp) -> TypeOf e
+TypeOf :: Exp -> #
+
+%pause
+%xfont "utopia-bold-r", size 4
+This doesn't really work since the expression might be ill typed. \
+We also need to consider the environment.
+
+%xfont "courier-bold-r", fore black, size 3
+interp :: (e :: Exp) -> 
+           (t :: Type) -> 
+           (s :: TEnv) -> 
+           VEnv s -> 
+           HasType e t s -> 
+           Decode t
+data Type = ...
+type TEnv = Sym -> Type
+type VEnv (s :: TEnv) = (x :: Symbol) -> Decode (s x)
+HasType :: Expr -> Type -> TEnv -> #
+Decode :: Type -> #
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Implementation
+
+	The Cayenne compiler is written in Haskell (sorry, not in Cayenne yet).
+	The compiler translates Cayenne into LML (Lazy ML).
+	The LML code is compiled with type checking off!
+
+	In the last phase of the translation to LML all type arguments and \
+type components of records are removed.  They are not needed at runtime.
+
+%xfont "courier-bold-r", fore black
+www.cs.chalmers.se/~augustss/cayenne
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+Conclusions
+Conclusions
+	Dependent types types are fun!
+	And useful
+	Undecidable type checking is not a practical disaster
+
+Future work
+	Proofs
+	More experience
+	Partial evaluation
+	Better implementation
+	...
+
+%pause
+%fore red, size 6, center, lcutin
+The End
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+
+%size 5
+Well, Bob, I'm glad you brought that up.

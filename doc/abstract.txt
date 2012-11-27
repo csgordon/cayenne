@@ -1,0 +1,16 @@
+Cayenne is a Haskell-like language.  The main difference between
+Haskell and Cayenne is that Cayenne has dependent types, i.e., the
+result type of a function may depend on the argument value, and
+components (which can be types or values) of records may depend on
+other components.  Cayenne also combines the syntactic categories for
+value expressions and type expressions; thus reducing the number of
+language concepts.
+
+Having dependent types and combined type and value expressions makes
+the language very powerful.  It is powerful enough that a special
+module concept is unnecessary; ordinary records suffice.  It is also
+powerful enough to encode predicate logic at the type level, allowing
+types to be used as specifications of programs.  However, this power
+comes at a cost: type checking of Cayenne is undecidable.  While this
+may appear to be a steep price to pay, it seems to work well in
+practice.

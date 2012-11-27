@@ -1,0 +1,4 @@
+cayenne: Compilation errors:
+"err25a.cy", line 7, column 0, Type error: Cannot normalize 
+eqNat x y
+

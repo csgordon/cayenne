@@ -1,0 +1,365 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Typing rules</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Typing rules</h1>
+The typing rules will appear when I've figured out how to do them in
+HTML, and also figured out exactly what they are. :-)
+
+<h2>"Star"</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+</td>
+</tr>
+<tr><td><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> # : #<sub>1</sub>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Variable</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>A</i>:<i>s</i>
+</td>
+</tr>
+<tr><td><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif">, <i>x</i> : <i>A</i> <img src="Greek/turnstile.gif"> <i>x</i> : <i>A</i>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Apply</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>f</i> : (<i>x</i>::<i>A</i>) -> <i>B</i>
+</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>a</i> : <i>A</i>
+</td>
+</tr>
+<tr><td colspan=2><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center colspan=2>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>f a</i> : <i>B</i>[<i>x</i>:=<i>a</i>]
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Lambda</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif">, <i>x</i> : <i>A</i> <img src="Greek/turnstile.gif"> <i>b</i> : <i>B</i>
+</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> ((<i>x</i>::<i>A</i>) -> <i>B</i>) : <i>t</i>
+</td>
+</tr>
+<tr><td colspan=2><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center colspan=2>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> (\(<i>x</i>::<i>A</i>) -> <i>b</i>) : ((<i>x</i>::<i>A</i>) -> <i>B</i>)
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Pi</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>A</i>:<i>s</i>
+</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif">, <i>x</i> : <i>A</i> <img src="Greek/turnstile.gif"> <i>B</i> : <i>t</i>
+</td>
+</tr>
+<tr><td colspan=2><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center colspan=2>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> ((<i>x</i>::<i>A</i>) -> <i>B</i>) : <i>t</i>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Conversion</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>a</i>:<i>A</i>
+</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>B</i>:<i>s</i>
+</td>
+<td nowrap align=center>
+<i>A</i> =<sub>ß</sub> <i>B</i>
+</td>
+</tr>
+<tr><td colspan=3><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center colspan=3>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>a</i> : <i>B</i>
+</td>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Weakening</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>b</i> : <i>B</i>
+</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>B</i> : <i>s</i>
+</td>
+</tr>
+<tr><td colspan=2><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center colspan=2>
+<img src="Greek/Gamma.gif">, <i>x</i> : <i>B</i> <img src="Greek/turnstile.gif"> <i>b</i> : <i>B</i>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Data</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>A</i><sub><i>ij</i></sub> : #
+</td>
+</tr>
+<tr>
+<td><hr size=1 noshade></td>
+<td nowrap><i>k</i> > 0, <i>n<sub>k</sub></i> <img src="Greek/geq.gif"> 0
+</td>
+</tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<samp>data</samp>
+<i>C</i><sub>1</sub> <i>A</i><sub>11</sub> ... <i>A</i><sub>1<i>n</i><sub>1</sub></sub>
+  | ... |  
+<i>C</i><sub><i>k</i></sub> <i>A</i><sub><i>k</i>1</sub> ... <i>A</i><sub><i>kn</i><sub><i>k</i></sub></sub>
+: #
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Constructor</h2>
+<i>T</i> <img src="Greek/ident.gif"> <samp>data</samp>
+<i>C</i><sub>1</sub> <i>A</i><sub>11</sub> ... <i>A</i><sub>1<i>n</i><sub>1</sub></sub>
+  | ... |  
+<i>C</i><sub><i>k</i></sub> <i>A</i><sub><i>k</i>1</sub> ... <i>A</i><sub><i>kn</i><sub><i>k</i></sub></sub>
+<p>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>T</i> : #
+</td>
+</tr>
+<tr>
+<td><hr size=1 noshade></td>
+</tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif"> <i>C<sub>i</sub></i> @ <i>T</i> : 
+<i>A<sub>i1</sub></i> -> ... -> <i>A<sub>ik<sub>i</sub></sub></i> -> <i>T</i>
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Case</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+<tr>
+<td><hr size=1 noshade></td>
+</tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Product</h2>
+<center>
+<table width="60%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>A</i><sub>1</sub> : <i>s</i><sub>1</sub>
+</td>
+<td nowrap align=center>...</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>A<sub>n</sub></i> : <i>s<sub>n</sub></i>
+</td>
+<td nowrap align=center>...</td>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>e<sub>j</sub></i> : <i>A<sub>j</sub></i>
+</td>
+</tr>
+<tr>
+<td colspan=5><hr size=1 noshade></td>
+</tr>
+<tr>
+<td colspan=5 nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+sig { <i>l</i><sub>1</sub> :: <i>A</i><sub>1</sub> <img src="Greek/gamma.gif"><sub>1</sub>; ...
+<i>l<sub>k</sub></i> :: <i>A<sub>k</sub></i> <img src="Greek/gamma.gif"><i><sub>k</sub></i>; ...
+<i>l<sub>n</sub></i> :: <i>A<sub>n</sub></i> <img src="Greek/gamma.gif"><i><sub>n</sub></i> }
+ : #<sub>u</sub>
+</td>
+</tr>
+</table>
+</center>
+where all <img src="Greek/gamma.gif"><i><sub>i</sub></i> is either empty
+or "= <i>e<sub>i</sub></i>".<br>
+where <i>j</i> belongs to a subset of 1..<i>n</i>.
+
+<h2>Record</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+<tr>
+<td><hr size=1 noshade></td>
+</tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Select</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+<tr>
+<td><hr size=1 noshade></td>
+</tr>
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Beta</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+</td>
+</tr>
+<tr><td><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center>
+(\(<i>x</i>::<i>A</i>) -> <i>B</i>) <i>C</i>  =<sub>ß</sub>  <i>B</i>[<i>x</i> := <i>C</i>]
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Sel</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+</td>
+</tr>
+<tr><td><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center>
+{ <i>l</i><sub>1</sub> :: <i>A</i><sub>1</sub> = <i>e</i><sub>1</sub>; ...
+<i>l<sub>n</sub></i> :: <i>A<sub>n</sub></i> = <i>e<sub>n</sub></i> } . <i>l<sub>k</sub></i>
+  =<sub>ß</sub>
+<i>e<sub>k</sub></i>[<i>l</i><sub>1</sub> :=
+<i>e</i>.<i>l</i><sub>1</sub>, ...
+<i>l<sub>n</sub></i> := <i>e</i>.<i>l<sub>n</sub></i>]
+</td>
+</tr>
+</table>
+</center>
+
+<h2>Sel-Type</h2>
+<center>
+<table width="50%">
+<tr>
+<td nowrap align=center>
+<img src="Greek/Gamma.gif"> <img src="Greek/turnstile.gif">
+<i>e</i> : { <i>l</i><sub>1</sub> :: <i>A</i><sub>1</sub> <img src="Greek/gamma.gif"><sub>1</sub>; ...
+<i>l<sub>k</sub></i> :: <i>A<sub>k</sub></i> = <i>e<sub>k</sub></i>; ...
+<i>l<sub>n</sub></i> :: <i>A<sub>n</sub></i> <img src="Greek/gamma.gif"><i><sub>n</sub></i> }
+</td>
+</tr>
+<tr><td><hr size=1 noshade></td></tr>
+<tr>
+<td nowrap align=center>
+<i>e</i> . <i>l<sub>k</sub></i>
+  =<sub>ß</sub>
+<i>e<sub>k</sub></i>[<i>l</i><sub>1</sub> :=
+<i>e</i>.<i>l</i><sub>1</sub>, ...
+<i>l<sub>b</sub></i> := <i>e</i>.<i>l<sub>n</sub></i>]
+</td>
+</tr>
+</table>
+</center>
+where <img src="Greek/gamma.gif"><i><sub>i</sub></i> is either empty
+or "= <i>e<sub>i</sub></i>".
+
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 31 01:39:56 CEST 1998
+<!-- hhmts end -->
+</body> </html>

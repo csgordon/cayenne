@@ -1,0 +1,11 @@
+open System$Unit   use * in
+open System$String use * in
+open System$List   use * in
+open System$Bool   use * in
+open System$Char   use * in
+open System$Error  use * in
+open System$IO     use * in
+open System$Tuples use * in
+open System$Either use * in
+open System$HO     use * in
+open System$Integer use * in

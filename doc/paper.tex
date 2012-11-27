@@ -1,0 +1,1669 @@
+%\batchmode
+\nonstopmode
+
+%%% \documentclass{acmconf}     %% ICFP
+\documentclass{llncs}[12pt]             %% Portugal
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{proof}
+\pagestyle{empty}
+\thispagestyle{empty}
+%\renewcommand{\thepage}{}
+
+\newcommand\bs{\char '134}
+%\newcommand\notyet[1]{#1}
+\newcommand\notyet[1]{}
+\newcommand\com[1]{}
+\newcommand\nocom[1]{#1}
+
+%\leftmargin -2cm
+%\leftmargini 0cm
+%\leftmarginv 0cm
+%\leftmarginvi 0cm
+%\textwidth 16cm
+%\topmargin -1.0cm
+%\textheight 24.5cm
+%\setlength\leftmargin {-2cm}
+
+\newcommand{\nt}[1]{{\it #1}}
+\newcommand{\te}[1]{{\tt #1}}
+\newcommand{\spp}{\mbox{~~}}
+
+\newcommand{\ruleh}[3]{\infer [$\sf \scriptsize #1$] {#3} {#2}}
+\newcommand{\seph}{ & }
+\newcommand{\judge}[2]{#1 \vdash #2}
+\newcommand{\judget}[2]{#1 & \vdash & #2}
+\newcommand{\hastype}[2]{#1 \in #2}
+%\newcommand{\rsep}{\vspace*{5mm}}
+\newcommand{\rsep}{\medskip\medskip}
+\newcommand{\dc}{$\te{::}$}
+\newcommand{\dt}{$\te{.}$}
+\newcommand{\sm}{$\te{;}$}
+\newcommand{\teq}{$\te{=}$}
+\newcommand{\fun}{$\te{->}$}
+%\newcommand{\lam}{$\bs$}
+\newcommand{\lam}{$\te{\bs}$}
+\newcommand{\eq}[2]{#1 \approx #2}
+\newcommand{\hash}[1]{\;$\te{\#}$_{#1}}
+\newcommand{\keyw}[1]{$\te{#1}$\;}
+
+\newcommand{\subst}[3]{#1[#2 \mapsto #3]}
+
+\def\mapstou{\mapstochar\rightharpoonup}
+\newcommand{\eval}[2]{#1 & $\longmapsto$ & #2 \\}
+\newcommand{\evalu}[2]{#1 & $\mapstou$ & #2 \\}
+\newcommand{\ieval}[2]{$ #1 \longmapsto #2 $}
+\newcommand{\ievalu}[2]{$ #1 \mapstou #2 $}
+\newcommand{\imeval}[2]{$ #1 \longmapsto^* #2 $}
+\newcommand{\imevalu}[2]{$ #1 \mapstou^* #2 $}
+
+
+\author{
+Lennart Augustsson \\
+}
+%%\affiliation{
+\institute{
+{ Department of Computing Sciences}\\
+{ Chalmers University of Technology}\\
+{ S-412 96 G{\"o}teborg, Sweden}\\
+Email: {\tt augustss@cs.chalmers.se}\\
+WWW: {\tt http://www.cs.chalmers.se/\~{}augustss}\\
+%% Phone: + 46 31 772 10 42\\
+%% Fax: + 46 31 16 56 55\\
+}
+\date{}
+\title{
+Cayenne ---
+a language with dependent types
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Cayenne is a Haskell-like language.  The main difference between Haskell and Cayenne
+is that Cayenne has dependent types, i.e., the {\em result type} of a function
+may depend on the {\em argument value}, and types of record components 
+(which can be types or values)
+may depend on other components.  Cayenne also combines the
+syntactic categories for value expressions and type expressions; thus
+reducing the number of language concepts.
+
+Having dependent types and combined type and value expressions makes the
+language very powerful.  It is powerful enough that a special module
+concept is unnecessary; ordinary records suffice.  It is also powerful
+enough to encode predicate logic at the type level, allowing types to
+be used as
+specifications of programs.  However, this power comes at a cost:
+type checking of Cayenne is undecidable.  While this may appear
+to be a steep price to pay, it seems to work well in practice.
+
+{\bf Keywords}: Type systems, language design, dependent types, module
+systems
+
+\end{abstract}
+
+%% \copyrightspace %% ACM
+
+\section{Introduction}
+Languages like Haskell \cite{hudak:haskell} and SML
+\cite{milner:sml-standard} have type systems that are among the most advanced 
+of any language.  Despite this there are things that are inexpressible
+in these type systems.  Dependent types, i.e., having types depend on
+values, increases the expressiveness of type systems and many of the
+problems of Hindley-Milner typing can be overcome.
+
+Cayenne is a Haskell-like language that combines dependent types and
+first class types, i.e., types can be used like values.  The syntax for value
+and type expressions is the same.  Cayenne does not have a separate
+notion of modules; records are used as modules, this means that the
+language for combining modules is also the usual expression language.
+This is in contrast with Haskell and SML.  Haskell has similar but
+different syntax for type and value expressions and definitions.
+SML has different syntax for value, type, and module expressions and definitions.
+It can be argued that they should look different, because they are different.
+But we want to argue the opposite, the facilities for the three types
+of expressions are similar, so why should they be different?  In Cayenne
+they are the same and exactly the same program constructs can be used
+on all levels, thus reducing the number of concepts that you need to master.
+
+Although dependent types have been used before in proof systems, e.g.,
+\cite{coquand:information},
+to our knowledge this is the first time that the full power
+of dependent types has been integrated into a
+{\em programming language}.
+
+We will now give some motivating examples, where we show problems
+in Haskell that are solved in Cayenne.  The differences between
+Haskell and Cayenne will be explained as they occur.
+
+\subsection{The type of {\tt printf}}
+The C standard I/O library 
+%\cite{stdio}
+has a very useful function for
+doing output, namely {\tt printf}.  The function {\tt printf} takes a formatting
+string as the first argument and then some additional arguments.  The
+number of arguments and their types depends on the formatting
+string.  It is simple to write a similar function in Haskell, but it will
+not type check.\footnote{The code given here is very inefficient, but
+that is easy to remedy.}
+\begin{verbatim}
+printf fmt = pr fmt "" where
+  pr ""           res = res
+  pr ('%':'d':cs) res = 
+      \ i -> pr cs (res ++ show (i::Int))
+  pr ('%':'s':cs) res = 
+      \ s -> pr cs (res ++ s)
+  pr ('%': c :cs) res =
+      pr cs (res ++ [c])
+  pr (c:cs)       res =
+      pr cs (res ++ [c])
+\end{verbatim}
+This is a very simplified version of {\tt printf}, but as in the real
+version, the substring ``{\tt \%d}'' marks an integer argument and 
+``{\tt \%s}'' marks a string argument.  The type of {\tt printf} clearly
+varies with its first argument; e.g.,
+%%\\ \\
+%%{\tt \spp printf~"\%d"~::~Int~->~String}\\
+%%{\tt \spp printf~"\%s~owes~\%d~SEK~to~\%s"~::\\ 
+%%     \spp\spp String~->~Int~->~String~->~String}\\
+\begin{verbatim}
+  printf "%d" :: Int -> String
+  printf "%s owes %d SEK to %s" ::
+      String -> Int -> String -> String
+\end{verbatim}
+
+As we can see, the function is easy to write and works perfectly, but
+cannot be given a type in Haskell.\footnote
+{Olivier Danvy has recently shown, \cite{danvy:formatting},
+that functions similar to {\tt printf} can be given a type
+with Hindley-Milner typing with a clever trick.}
+
+\subsubsection*{Cayenne solution}
+The type of {\tt printf} can easily be computed from the first argument.
+All we need to do is to write a function that computes the right type.
+The type of all types is called ``{\tt \#}''\footnote{
+We would like to
+use the more familiar notation ``{\tt *}'' for the type of types.  
+This might be possible, but it interacts badly with the use of ``{\tt
+*}'' as an infix operator.}
+in Cayenne.
+\begin{verbatim}
+PrintfType :: String -> #
+PrintfType ""           = String
+PrintfType ('%':'d':cs) = Int    -> PrintfType cs
+PrintfType ('%':'s':cs) = String -> PrintfType cs
+PrintfType ('%': _ :cs) =           PrintfType cs
+PrintfType ( _ :cs)     =           PrintfType cs
+
+printf :: (fmt::String) -> PrintfType fmt
+printf fmt = pr fmt ""
+
+pr :: (fmt::String) -> String -> PrintfType fmt
+pr ""           res = res
+pr ('%':'d':cs) res = 
+      \ (i::Int)    -> pr cs (res ++ show i)
+pr ('%':'s':cs) res = 
+      \ (s::String) -> pr cs (res ++ s)
+pr ('%': c :cs) res =
+      pr cs (res ++ [c])
+pr (c:cs)       res =
+      pr cs (res ++ [c])
+\end{verbatim}
+The function {\tt PrintfType} mimics the recursive structure of {\tt
+printf}, but it computes the type instead of the value.  E.g.,\\
+{\tt \spp PrintfType~"\%d"~$\longmapsto$~Int~->~String}\\
+The typing of {\tt printf} is now\\
+{\tt \spp printf~::~(fmt::String)~->~PrintfType~fmt}\\
+This example differs from Haskell in that the first argument
+(which has type {\tt String}) has a name, {\tt fmt}, which can be used
+in the type expression.  A minor point to note is that
+$\lambda$-expressions in Cayenne have an explicit type on the bound
+variable, whereas they do not in Haskell.
+
+Another example of a function with a dependent type can be found
+in appendix \ref{app:taut}.
+
+\subsection{The set ``package''} 
+Record types in Haskell (and SML) can contain values, but not types;
+sometimes this can be inconvenient. To show an example of this we will
+use a simple set of integers.  It should
+support creating the empty set, the singleton set, taking union, and
+testing for set membership.  There are many possible ways to implement
+these sets and sometimes you want to have multiple implementations
+in a program and choose dynamically which one to use (e.g., depending
+on the use pattern).  To be able to do this we would like to be able
+to store different set implementations in a data structure.
+
+We would want to define the set type something like
+\begin{verbatim}
+
+data IntSet = IntSet { 
+    type T,
+    empty :: T,
+    singleton :: Int->T,
+    union :: T->T->T,
+    member :: Int->T->Bool
+    }
+\end{verbatim}
+
+Unfortunately, this is not possible since we cannot have a type in a record and
+the name {\tt T} would also not be in scope.
+This kind of construct is only available at the module level in
+Haskell, but modules are definitely not first class objects in
+Haskell; there are no operations on modules except for the
+importation of them.
+SML allows this kind of definitions on the module level and has a rich
+language for combining them, but they are still not first class
+objects, so they cannot be put in a run-time data structure.\footnote{It is not obvious that the first class modules proposed
+here extend easily to a language like SML that supports side
+effects.}
+
+\subsubsection*{Cayenne solution}
+Cayenne records are different from Haskell records in several respects:  Cayenne records
+are not data types, they can contain types, and when defining a record
+object the labels are bound within the record expression.  
+The {\tt sig} keyword starts a record type 
+and the {\tt struct} keyword starts a record value.
+
+The {\tt IntSet} type could be defined like this
+\begin{verbatim}
+type IntSet = sig
+    type T
+    empty :: T
+    singleton :: Int->T
+    union :: T->T->T
+    member :: Int->T->Bool
+\end{verbatim}
+
+An implementation could look like this
+\begin{verbatim}
+naïveSet :: IntSet
+naïveSet = struct
+    abstract type T = Int->Bool
+    empty x = False
+    singleton x x' = x == x'
+    union s t x = s x || t x
+    member x s = s x
+\end{verbatim}
+
+This kind of record borrows features from Haskell modules, but they
+are still first class objects.  
+% In fact, Cayenne has no separate module concept; the records are used instead of modules.
+
+\subsection{The {\tt Eq} class}
+The {\tt Eq} class in Haskell has the following definition:\footnote{It also
+has a definition of {\tt (/=)}, but it is of no use in this example so we
+disregard it.}
+\begin{verbatim}
+class Eq a where
+    (==) :: a -> a -> Bool
+\end{verbatim}
+This, quite correctly, states that {\tt (==)} takes two arguments of
+the same type and returns a boolean, but surely this is not all we
+expect from an equality.  We expect it to be a ``real'' equality,
+i.e., we most likely want it to be an equivalence relation.\footnote{Or,
+even better, a congruence relation.}  The equivalence property of equality
+cannot be expressed in Haskell.  The best we can do is to have it
+as a comment, and hope that each equality defined in the program is really
+an equivalence relation.
+
+\subsubsection*{Cayenne solution}
+Cayenne has no type classes so the {\tt Eq} class problem must be
+reformulated 
+slightly.  A class definition in Haskell would correspond to a type
+definition of a record in Cayenne, and instance declarations in
+Haskell correspond to values of that type.  All dictionaries will thus
+be passed explicity in Cayenne.
+
+The {\tt Eq} ``class'' in Cayenne would be
+\begin{verbatim}
+type Eq a = sig
+    (==) :: a -> a -> Bool
+\end{verbatim}
+To include an equivalence proof we must first have a way of expressing
+logical properties.  This is, in fact, easy since Cayenne types can,
+through the Curry-Howard isomorphism,
+encode predicate calculus as types, see figure~\ref{fig:predcalc}.
+Terms of the different types correspond to the
+proof of the corresponding properties.
+This is all well known from constructive
+type theory \cite{nordstrom:book}, and well before that \cite{howard:form-as-types}.
+
+\begin{figure}
+\begin{tabular}{l|l}
+Predicate calculus              & Cayenne type          \\
+\hline 
+$\bot$                          & \te{Absurd} (or any empty type)               \\
+$\top$                          & any non-empty type    \\
+$x \vee y$                      & \te{Either} $x\; y$   \\
+$x \wedge y$                    & \te{Pair} $x\; y$     \\
+$\forall x \in A . P(x)$        & \te{(}$x$\te{::}$A$\te{)~->~}$P(x)$ \\
+$\exists x \in A . P(x)$        & \te{\{}$x$\te{::}$A$\te{;~}$y$\te{::}$P(x)$\te{\}} \\
+\end{tabular}
+\begin{verbatim}
+data Absurd =
+data Pair x y = pair x y
+data Either x y = Left x | Right y
+\end{verbatim}
+\caption{``Encoding'' predicate logic as Cayenne types.}
+\label{fig:predcalc}
+\end{figure}
+
+We encode the absurd proposition (i.e., falsity) by the empty type, and
+all types with elements encode truth.  The dependent function type
+encodes universal quantification and records encode existential quantification.
+Proving a property correspond to finding an element (i.e., constructing a value)
+in a type.  Since false logical statements correspond to the empty type
+we cannot find any values in them, but in (constructively) true logical
+statements we can.
+
+One way of solving our problem in Cayenne is to extend the {\tt Eq} type like this:
+\begin{verbatim}
+type Eq a = sig
+    (==) :: a -> a -> Bool
+    equiv :: Equiv (LiftBin (==))
+\end{verbatim}
+{\tt LiftBin} is a function that maps a binary operation yielding a Boolean
+into a corresponding relation.  {\tt Equiv} is a predicate on relations stating
+that the relation is an equivalence relation.
+
+The following auxiliary definitions are used above.  Further differences
+between Haskell and Cayenne appear below: type variables must be
+bound, but are often used as {\em hidden} arguments, introduced by the
+{\tt |->} function arrow, see section~\ref{sec:hidden} for further discussion.
+{\small
+\begin{verbatim}
+data Absurd =
+
+data Truth = truth
+
+Lift :: Bool -> #
+Lift (False) = Absurd
+Lift (True)  = Truth
+
+LiftBin :: (a :: #) |-> (a -> a -> Bool) -> Rel a
+LiftBin |a op = \ (x::a) -> \ (y::a) -> Lift (op x y)
+
+type Rel a = a -> a -> #
+
+Refl :: (a :: #) |-> Rel a -> #
+Refl |a R = (x::a) -> x `R` x
+
+Symm :: (a :: #) |-> Rel a -> #
+Symm |a R = (x::a) -> (y::a) -> x `R` y -> y `R` x
+
+Trans :: (a :: #) |-> Rel a -> #
+Trans |a R = (x::a) -> (y::a) -> (z::a) -> 
+    x `R` y -> y `R` z -> x `R` z
+
+Equiv :: (a :: #) |-> Rel a -> #
+Equiv R = sig
+    refl :: Refl R
+    symm :: Symm R
+    trans :: Trans R
+\end{verbatim}
+}
+
+Appendix \ref{app:equiv} contains the complete code for this example
+with some instances.
+
+\section{Core Cayenne}
+Cayenne has three basic type forming constructs: dependent functions,
+data types (sums), and dependent records (products).\footnote{The terminology is a little confusing here, what in constructive type theory is usually called dependent products is called
+dependent functions in this paper and what in CTT is called
+dependent sums is called dependent records here.  The latter terminology is more in the tradition
+of programming languages.}
+Core Cayenne is the subset
+of Cayenne that has no syntactic bells and whistles, just the basic
+constructs.  We will start by looking at Core Cayenne and then at the
+various syntactic shorthands.  The syntax of Core Cayenne is given in
+figure~\ref{fig:syntax}.  The grammar disregards certain minor
+concrete syntax issues.  There is no syntactic distinction between
+expressions and types in Cayenne, as is reflected in the grammar.
+
+\begin{figure*}
+\center{
+\begin{tabular}{llll}
+\nt{expr} & ::=
+ & \te{(} \nt{varid} \te{::} \nt{type} \te{)} \te{->} \nt{expr} & function type\\
+&& \te{\bs} \te{(} \nt{varid} \te{::} \nt{type} \te{)}
+\te{->} \nt{expr} & $\lambda$ expression \\
+&& \nt{expr} \nt{expr} & application \\
+&& \te{data} \{ \nt{conid} \{ \nt{type} \} \te{|} \} & sum type\\
+&& \nt{conid} \te{@} \nt{type} & constructor \\
+&& \te{case} \nt{varid} \te{of} \{ \nt{arm} \} \te{::} \nt{type} & sum
+scrutinization \\
+&& \te{sig} \{ \nt{sign} \} & record type \\
+&& \te{struct} \{ \nt{defn} \} & record formation \\
+&& \nt{expr} \te{.} \nt{lblid} & record selection \\
+&& \nt{id} & variable \\
+&& \te{\#}$_n$ & type of types\\
+\nt{arm} & ::= & \te{(} \nt{conid} \{ \nt{varid} \} \te{)~->} \nt{expr} \te{;} \\
+         &     & \nt{varid} \te{->} \nt{expr} \te{;} \\
+\nt{sign} & ::= & \nt{lblid} \te{::} \nt{type} \te{;} \\
+          &     & \nt{lblid} \te{::} \nt{type} \te{=} \nt{expr} \te{;} \\
+\nt{defn} & ::= & \nt{vis} \nt{lblid} \te{::} \nt{type} \te{=} \nt{expr} \te{;} \\
+\nt{vis} & ::= & \te{private} | \te{public} \nt{abs} \\
+\nt{abs} & ::= & \te{abstract} | \te{concrete} \\
+\nt{type} & ::= & \nt{expr} \\
+\nt{varid} & ::= & \nt{id} \\
+\nt{conid} & ::= & \nt{id} \\
+\nt{lblid} & ::= & \nt{id} \\
+\end{tabular}
+}
+\caption{
+%{\center
+Core Cayenne abstract syntax grammar.
+Metasyntax: \{ \} are used to denote repetition of an arbitrary number of items.
+%}
+}
+\label{fig:syntax}
+\end{figure*}
+
+\subsection{Functions}
+Function expressions are written as $\lambda$-expressions.  The bound
+variable must be given a type.  The function type is written like the
+$\lambda$-expression, but without the leading ``\te{\bs}''.  
+
+The big difference between the Cayenne function type and the Haskell function
+is that since the bound variable is available to the right of the arrow,
+the result type of a function may depend on the value of the argument.
+
+Function application is written with juxtaposition as usual.
+
+Example: \\
+{\tt \bs~(x::Int)~->~inc~x}\\
+which has type\\
+{\tt (x::Int)~->~Int}
+
+\subsection{Data types}
+Unlike Haskell, a data type (sum type)
+does not have to be given a name; there is an expression that denotes
+each data type.  E.g., ``{\tt data False | True}'' is the type of
+booleans.
+
+Constructors are written in a way that is very different from
+Haskell.  
+The constructor names used in a data type expression have no name restrictions
+(unlike Haskell where they have to be capitalized)
+and need not be unique.  
+Consequently, given only the name of a constructor
+it is impossible tell what type it constructs.  Therefore, constructors are
+given with their types in Cayenne.  E.g., ``{\tt True@(data False | True)}'' is
+one of the constructors for the boolean type, or, if
+``\te{Bool}'' has been defined, it can be written ``{\tt True@Bool}''.
+Constructor names are not part of the usual name space; they can only occur
+in ``\te{@}''-expressions and \te{case} expressions and in the latter the
+type that they construct can be deduced.
+
+Case expressions in Core Cayenne look a little different from Haskell.
+Only simple patterns are allowed and all constructor patterns have
+to be parenthesised to distinguish them from variable patterns.
+Apart from the scrutinized variable and the
+case arms, the case expression also has a type attached.  This type expression
+gives the type of the arms of the case expression.  Note that this
+expression can contain the scrutinized variable so the type may depend on it.
+The reason for having this type is that with dependent types it is not
+in general possible to figure out the type of the case expression.
+
+Example:\\
+\te{
+case l of\\
+(Nil) -> True;\\
+(Cons x xs) -> False;
+\\ \mbox{~~~}:: Bool
+}
+
+An example with a dependent type:\\
+\te{
+case~l~of\\
+(True)~~->~1;\\
+(False)~->~"Hello";\\
+\mbox{~~~}::~(case~l~of~(True)~~->~Int; \\
+\mbox{~~~~~~~~~~~~~~~~~}(False)~->~String)
+}
+
+\subsection{Records}
+The record type (product type) in Cayenne is the most complicated of the type formers.  The
+reason for this is that records also serve the purpose of modules in
+most other languages.
+
+A record type is written as {\tt sig} followed by a signature for each
+component of the record.  The signature normally gives only the type
+of the component, but it can also give the {\em value} of it.  This
+feature is sometimes called a translucent sum, and is described in
+more detail in section~\ref{sec:tsum}.
+
+A record is formed by the {\tt struct} keyword followed by bindings for
+all the record components.  Each binding gives the type and value of
+the component as well as its visibility.  The names of the record
+components (the labels) are in scope within the record expression.
+This means that the bindings are mutually recursive.\footnote{Though there
+are restrictions on how the recursion may occur in the signatures to ensure
+that the type can be viewed as a fixpoint of a $\Sigma$-type.}
+
+The visibility for a record component determines how it will show up
+in the type of the record.  A {\tt private} component does not show up
+at all in the type of the record, a {\tt public abstract} component has only
+its type, and a {\tt public concrete} component has both its type and
+value in the type of the record.
+
+A record component, which occurs in (i.e., which is not \te{private}) the type of the record, can be
+extracted with the usual dot notation.
+
+Examples:
+{\tt \\struct\\
+\mbox{~~~}private~x~::~Int~=~1\\
+\mbox{~~~}public~abstract~y~::~Int~=~x+1~\\
+\mbox{~~~}public~concrete~z~::~Int~=~x+2\\} 
+has type 
+{\tt \\
+sig \\
+\mbox{~~~}y~::~Int\\
+\mbox{~~~}z~::~Int=3
+} \\
+Selection: \te{r.y + r.z}
+
+\subsection{The type of types}
+The type of types is $\hash{1}$, this type has type $\hash{2}$ which has
+type $\hash{3}$ etc.  The reasons for using a stratified type
+system are twofold: first, using ``\te{\#~::~\#}'' would, even in the absence of recursion,
+make the Cayenne
+type system unsound as a logic as it would allow Girard's paradox;
+second, the unstratified type system would make it impossible during type
+checking to determine if an expression corresponds to a type or a real value
+and it would be impossible to remove the types at runtime, see section~\ref{sec:erasetypes}.
+
+Note that there is no elimination construct for the \te{\#} type, i.e., no
+\te{casetype} construct.  It would be possible and useful to have such a construct,
+but Cayenne currently lacks it, partly because having it would make it
+impossible to remove runtime type information, see \ref{sec:erasetypes}.
+
+%{\sf The actual stratification used in Cayenne is a little more complicated, but is left 
+%out of this version of the paper for brevity.}
+
+\section{Full Cayenne}
+Using Core Cayenne would be feasible, but quite tedious, just like
+using the bare $\lambda$-calculus is.  Cayenne has many syntactic
+constructs to make it more palatable and closer to an ordinary functional
+language.
+
+\subsection{Hidden arguments}
+\label{sec:hidden}
+Many functions have type arguments that seem to serve no purpose, except
+to irritate the user. E.g. \te{\\
+\spp if~::~(a~::~\#)~->~Bool~->~a~->~a~->~a\\}
+for each use of {\tt if} the type of the two branches must be
+given as the first argument.
+
+To lessen this problem Cayenne uses a mechanism for leaving out certain
+arguments at the application site.  However, the arguments still must be
+given when the function is defined.  Hidden arguments introduce
+a new version of the function type, the function abstraction, and the function
+application.
+
+The function arrow in both the type and abstraction notation is
+written {\tt |->} for hidden arguments.  Application of a
+hidden argument uses infix {\tt |}, but normally a hidden
+argument does not need to be given at all.
+
+In function definitions the hidden arguments should not be present on
+the left hand side unless preceded by a {\tt |}, i.e., the left
+hand side looks like an application.
+
+Example:
+\begin{verbatim}
+if :: (a :: #) |-> Bool -> a -> a -> a
+if (True)  x y = x
+if (False) x y = y
+\end{verbatim}
+This ``{\tt if}'' function can the be used as ``{\tt if True 1 2}'', or more
+explicitly ``{\tt if |Int True 1 2}''.
+
+The concept of hidden arguments is a syntactic device without any deep semantic properties.
+The function type for hidden arguments should not be viewed as a new
+type.  It is completely compatible with the normal function type.
+It only serves as a marker to aid the insertion of the hidden arguments.
+This view of hidden arguments was presented in \cite{augustsson:alf} and later
+used in other systems like Lego, \cite{luo:lego},
+where the concept was formalized.
+Similar mechanism exist e.g.,
+in Quest, \cite{cardelli:quest}, and Russell, \cite{boehm:russell}.
+
+The current implementation of hidden arguments is quite weak and cannot
+always find the hidden arguments even when it seems reasonable that
+it should.  It can find a hidden argument if the variable (\te{a} in
+the example) occurs in a later argument type or the result type.
+In the future we will probably switch to a more powerful
+method that introduces metavariables (in the sense of logical 
+frameworks) and tries to derive their values using more powerful
+methods such as unification.
+
+\subsection{Syntactic sugar}
+This is a brief list of syntactic extensions that can be regarded
+as mere ``sugar''.
+\begin{itemize}
+\item If the variable bound in the function type does not occur
+anywhere it can be dropped and the
+function type is thus written as in Haskell. E.g. ``{\tt (x::Int)->Int}''
+can be written as ``{\tt Int->Int}'' instead.
+
+\item Infix operators (with a fixed set of precedences) can be used.
+The same conventions as in Haskell are used.
+
+\item The patterns in case arms can be written in the normal Haskell
+style with nested patterns etc.  The type part of case expression is
+only necessary if the type of the right hand sides depend on the scrutinized
+expression.
+
+\item {\tt public} can be omitted, since it is the default.  {\tt concrete}
+is the default for type definitions, and {\tt abstract} for other
+definitions.
+
+\item Function definitions can be written in the normal Haskell style
+with type signatures and pattern matching. E.g.,
+\begin{verbatim}
+last :: (a::#) |-> List a -> a = 
+    \ (a :: #) |-> \ (l::List a) ->
+    case l of
+    (x : (Nil)) -> x
+    (x : xs) -> last xs
+\end{verbatim}
+can be written
+\begin{verbatim}
+last :: (a::#) |-> List a -> a
+last (x : (Nil)) = x
+last (x : xs) = last xs
+\end{verbatim}
+
+\item If a definition is preceded by the keyword {\tt type} it is
+assumed to have type {\tt \#} and all its arguments have default type
+{\tt \#}. E.g.\\
+\te{~~P~::~\#~->~\#~=~\bs~(a~::~\#)~->~a->Bool}\\
+can be written \\
+\te{~~type~P~a~=~a->Bool}
+
+\item A data type definition can be written in the same way as in
+Haskell.  This corresponds to several bindings.  First one for the type
+itself, then one for each constructor in the type.  E.g. the definition
+{\tt \\ 
+data Maybe a = Nothing | Just a \\
+} correspends to the definitions 
+\begin{verbatim}
+Maybe :: # |-> # =
+  \(a::#) |-> data Nothing | Just a 
+Nothing :: (a::#) |-> Maybe a =
+  \(a::#) |-> Nothing@(Maybe a) 
+Just :: (a::#) |-> a -> Maybe a =
+  \(a::#) |-> \(x::a) -> Just@(Maybe a) x
+\end{verbatim}
+
+\item Cayenne has a {\tt let} expression that is like the Haskell {\tt
+let} expression.  This can be translated into a record expression.
+%% ``\te{let {\it defs} in e}'' is equivalent to ``\te{struct \{ {\it defs}; x = e \}.x}''
+%% where \te{x} is a fresh variable.
+
+
+\item To make access to record components more convenient there is an
+{\tt open} expression that ``opens'' a record and makes its components
+available.  The {\tt open} construct explicitly names the components that should
+be visible.  E.g. 
+``{\tt open~movePoint~d~p~use~x,~y~in~dist~x~y}''.
+The ``{\tt open}'' expression can easily be translated to a ``\te{let}''
+expression.
+
+\item A value of record type can be coerced to a value of a different
+record type if the result type is the same as the original except that
+it has fewer fields.  The coercion is written ``\nt{expr}~\te{::}~\nt{type}''
+and translates to a let expression.
+
+\item Type signatures can be omitted in many places.
+Even if the basic rule is that all Cayenne definitions should
+have a type signature it is easy to relax this rule somewhat.
+With the relaxed rule Cayenne programs have about the same
+number of type signatures as the corresponding Haskell program
+would have and they place no big burden on the programmer.
+
+\item $\hash{1}$ can be written as \te{\#}.
+
+\item A Haskell-like ``\te{do}'' notation can be used for monads.
+
+\item The Haskell layout rule is used to avoid braces and semicolons.
+The keywords \te{case}, \te{do}, \te{let}, \te{sig}, 
+and \te{struct} triggers it.
+
+\end{itemize}
+
+\subsection{Modules}
+Cayenne does not really have any modules in the traditional sense, all
+it has is named expressions that exist in a global name
+space.  Module names are distiguished by having a ``{\tt \$}'' in their names.
+The module name space can be viewed as hierarchical with
+``{\tt \$}'' as the name separator (like how UNIX path names use ``\te{/}'' 
+or how Java names use ``\te{.}'').
+Module identifiers can be used freely in expressions without any
+explicit import declaration (just as in Java).
+
+A module definition looks like a simple definition except that it is
+preceeded by the keyword {\tt module}.  The type in the definition is
+not necessary and it can be left out.  A module can also have {\tt
+concrete} visibility.  This plays the same role here as it does for records,
+i.e., you can make the value of a module known instead of only its type.
+
+Some sample modules:
+\begin{verbatim}
+module foo$bar = struct
+data Nat = Zero | Succ Nat
+
+module foo$baz =
+open System$Int use Int, (+) in
+struct
+inc :: Int -> Int
+inc x = x+1
+dec :: Int -> Int
+dec x = x-1
+\end{verbatim}
+
+%\subsubsection{{\tt \#include}}
+%Most programs need values from the <samp>System</samp> modules.  To get easy access
+%to the entities defined in a module it is normally <samp>open</samp>ed.  This means
+%that most modules will start out with a number of <samp>open</samp> constructs.
+%To alleviate this problem there are some predefined set of texts that
+%can be included in a module.  These texts are inserted by simple
+%text insertion with an <samp>#include</samp>.
+
+Modules are the units of separate compilation.  To compile a module,
+only the types of the modules it refers to need be known.
+
+\section{The Cayenne type system}
+
+\subsection{Translucent sums}
+\label{sec:tsum}
+Many Haskell modules export types in a non-abstract way, i.e., the
+type is exported so that not only the name of the type, but also its
+constructors are known.  E.g.
+\begin{verbatim}
+module Tree(Tree(..), depth) where
+data Tree a = Leaf | Node (Tree a) a (Tree a)
+depth :: Tree a -> Int
+depth Leaf = 0
+depth (Node l _ r) = 1 + (depth l `max` depth r)
+\end{verbatim}
+If we try to write the corresponding Cayenne record we get
+\begin{verbatim}
+module ex$Tree = struct 
+data Tree a = Leaf | Node (Tree a) a (Tree a)
+depth :: (a :: #) |-> Tree a -> Int
+depth (Leaf) = 0
+depth (Node l _ r) = 1 + (depth l `max` depth r)
+\end{verbatim}
+which has type
+\begin{verbatim}
+sig 
+  Tree :: # -> #
+  depth :: (a :: #) |-> Tree a -> Int
+\end{verbatim}
+This is definitely not what we had in mind, because from this
+signature we can only see that {\tt Tree} is a type constructor, but we
+cannot see its definition.  We could try and remedy this by saying that
+to use a module, not only must its signature be known, but its actual
+value as well. This way, we would have the definition of {\tt Tree} available.
+But this is also not what we intended, because this would reveal the
+definition of {\tt depth}, which we may not want to reveal to users
+of the {\tt ex\$Tree} module.
+
+For this reason we introduce the possibility for each
+record component to specify if it should be fully known or only known with its
+type.  We then write\footnote{The {\tt
+abstract} and {\tt concrete} keywords are actually superfluous in this example
+because the default visibility is the same as those indicated by
+the keywords.}
+
+\begin{verbatim}
+module ex$Tree = struct 
+concrete
+data Tree a = Leaf | Node (Tree a) a (Tree a)
+abstract 
+depth :: (a :: #) |-> Tree -> Int
+depth (Leaf) = 0
+depth (Node l _ r) = 1 + (depth l `max` depth r)
+\end{verbatim}
+which has type
+\begin{verbatim}
+sig 
+  Tree :: # -> # =
+     data Leaf | Node (Tree a) a (Tree a)
+  Leaf :: (a::#) |-> Tree a = 
+     \ (a::#) |-> Leaf@(Tree a)
+  Node :: (a::#) |-> Tree a -> a -> Tree a 
+          -> Tree a =
+     \ (a::#) |-> \ (l::Tree a) -> \ (x::a) -> 
+     \ (r::Tree a) -> Node@(Tree a) l x y
+  depth :: (a :: #) |-> Tree a -> Int
+\end{verbatim}
+
+This is a very peculiar type because it not only specifies the
+types of the \te{Tree}, \te{Leaf}, and \te{Node} components, but also their exact values.  Any
+record of this type will have a {\tt Tree} etc.\ with exactly these values,
+whereas the value of {\tt depth} may differ.
+
+This idea comes from the type system for the SML module system where
+these types are called translucent sums, \cite{lillibridge:translucent},
+or the similar notion of singleton kinds.
+%%%, \cite{harper:skind}.
+A similar construct is also present in Cardelli's Quest, where it is called
+manifest definitions, \cite{cardelli:quest}.
+
+\subsection{Typing and evaluation rules}
+The Cayenne typing rules are given in table~\ref{table:typing-1} and
+table~\ref{table:typing-2}.
+
+Some simplifications have been made to the typing rules for the
+purpose of presentation.  In data type each constructor has exactly one
+argument which must be of value type.  Furthermore, the order of
+the definitions in a \te{struct}/\te{sig} does not matter in real
+Cayenne, where as they do in the rules.
+
+The stratification showed in the typing rules is also a simplification
+of the one used in Cayenne.  The type of types as used in the
+rules is $\hash{n}$, but in actuality it is $\hash{n,m}$.
+The first subscript is derived as shown in the typing rules
+and the second we get by replacing $min$ by $max$ in the {\sf Prod} rule.
+The reason for two subscripts is that the first number is necessary
+for getting the type erasure to be possible, and the second one is
+necessary if we want the logic to be sound (if recursion
+is removed).
+
+The environment (or assumtions), $\Gamma$, in the typing rules may contain
+variables with their types, as is usually the case.  But they may
+also contain variables with their types as well as their {\em values}.
+The reason for the values is that we sometimes need values to
+enable reductions during type checking.  It is the {\sf Rec} rule
+that introduces values into $\Gamma$.
+
+The fact that Cayenne has dependent types shows up in a few places
+in the typing rules.  In the {\sf App} rule the term $f\;a$ has a type
+that may depend on $x$, so $x$ is replaced with the actual value in $B$.
+Furthermore, in the {\sf Case} rule in each arm the type of the arm
+may depend of the scrutinized variable so a substitution is performed here as well.
+
+The translucent sums show up in the {\sf SelE} rule where a term
+$e.l$ can be reduced even if only the type of $e$ is known.  This
+reduction is only performed during type checking and never during normal reduction
+(execution).
+
+Because of a lack of time, we have not yet proved essential theorems
+about the Cayenne type system, such as soundness and the subject
+reduction theorem.  While we believe them to be true, and they have been
+proved similar systems, they have not proved for a system with dependent
+types and translucent sums.
+
+The Cayenne evaluation rules, table \ref{tab:eval}, are unsurprising.
+Note that because definitions in a \te{struct} are recursive
+some care has to be exercised.
+
+\subsubsection{A problem with substitution}
+Substitution in Core Cayenne as described by the rules in this section
+suffers from a problem: it does not really work; there are some
+unavoidable name clashes.  We illustrate the problem with an example.
+To make the example shorter we omit types and use a \te{let}
+expression which could be translated to a record expression.
+\begin{verbatim}
+struct
+    x = 1
+    z = let y = x
+        in  struct x = y
+\end{verbatim}
+As we can easily see the \te{z} component of this record is a record
+with an \te{x} component with value \te{1}.  Let us apply the standard
+reduction rule for \te{let}, namely \ieval{\keyw{let} x = e \;\keyw{in}
+e'}{\subst{e'}{x}{e}}.
+\begin{verbatim}
+struct
+    x = 1
+    z = struct x = x
+\end{verbatim}
+This is clearly not the same value as we had before; the \te{x} has
+been captured when it should not be.  Note that we cannot rename either
+of the two \te{x}s since the name of the labels appear in the type;
+renaming them would change the type.
+
+This problem is annoying, but can be handled easily.  All we need to do
+is to have two different names for all labels.  One name is the label
+itself as it appears in the type and the other name is the name that
+is bound inside the record.  The second name is not part of the type
+and can clearly be $\alpha$-converted when necessary.  To avoid
+cluttering the typing rules even more we will not introduce any
+notation for this in the rules, instead we assume that the problem can
+be handled if needed.  A similar solution is used in \cite{betarte98:thesis}.
+
+%%%%\com{
+
+\begin{table}
+
+\com{
+\ruleh{Empty context}
+    {\mbox{}}
+    {\langle\rangle\; valid}
+\rsep
+\ruleh{Type context}
+    {\Gamma\; valid \seph \judge{\Delta}{\hastype{A}{t}}}
+    {\Gamma,\hastype{x}{A}\; valid}
+\rsep
+\ruleh{Value context}
+    {\Gamma\; valid \seph \judge{\Delta}{\hastype{A}{t}}} \seph \judge{\Delta}{\hastype{a}{A}}
+    {\Gamma,\hastype{x}{A = a}\; valid}
+\rsep
+}
+\ruleh{Star}{\mbox{}}
+            {\judge{\Gamma}
+                   {\hastype{\hash{n}}
+                            {\hash{n+1}}}}
+\rsep
+\ruleh{Var}{\judge{\Gamma}{\hastype{A}{s}}}
+           {\judge{\Gamma,\hastype{x}{A}}{\hastype{x}{A}}}
+\rsep
+\ruleh{Pi}
+    {\judge{\Gamma}{\hastype{A}{s}} \seph
+     \judge{\Gamma,\hastype{x}{A}}{\hastype{B}{t}}}
+    {\judge{\Gamma}{\hastype{(x\dc A)\fun B}{t}}}
+\rsep
+\ruleh{Lam}
+    {\judge{\Gamma,\hastype{x}{A}}{\hastype{b}{B}} \seph 
+     \judge{\Gamma}{\hastype{(x\dc A)\fun B}{t}}}
+    {\judge{\Gamma}{\hastype{\lam(x\dc A)\fun b}{(x\dc A)\fun B}}}
+\rsep
+\ruleh{App}{\judge{\Gamma}{\hastype{f}{(x\dc A)\fun B}} \seph \judge{\Gamma}{\hastype{a}{A}}}
+           {\judge{\Gamma}{\hastype{f\;a}{\subst{B}{x}{a}}}}
+\rsep
+\ruleh{Data}
+    {\judge{\Gamma}{\hastype{A_1}{\hash{1}}} \seph \ldots \seph
+     \judge{\Gamma}{\hastype{A_n}{\hash{1}}}}
+    {\judge{\Gamma}{\hastype{\;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n }{\hash{1}}}}
+\rsep
+\ruleh{Con}
+    {\judge{\Gamma}{\hastype{T}{\hash{1}}}}
+    {\judge{\Gamma}{\hastype{C_k$\te{@}$T}{A_k \fun T}}}
+where $T \equiv \;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n$
+
+\rsep
+\ruleh{Case}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{x}{\;$\te{data}$\; C_1\;A_1 $\te{|}$ \ldots$\te{|}$\; C_n\;A_n}} \\
+\judget{\Gamma,\hastype{x_1}{A_1}}{\hastype{e_1}{\subst{A}{x}{C_1\;x_1}}} \\
+&\vdots&\\
+\judget{\Gamma,\hastype{x_n}{A_n}}{\hastype{e_n}{\subst{A}{x}{C_n\;x_n}}} \\
+\end{array}
+}
+{\judge{\Gamma}
+  {\hastype{$\te{case}$\;x\;$\te{of \{}$\; C_1\;x_1 \fun e_1 \sm \ldots \sm C_n\;x_n \fun e_n$\te{\}::}A$ }
+           {A}
+  }
+}
+\rsep
+\ruleh{Prod}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{A_1}{\hash{u_1}}} \\
+\judget{\Gamma,\;\hastype{l_1}{A_1}}{\hastype{A_2}{\hash{u_2}}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_{n-1}}{A_{n-1}}}{\hastype{A_n}{\hash{u_n}}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_n}{A_n}}{\hastype{e_j}{A_j}} \\
+& \vdots & \\
+\end{array}
+}
+{\judge{\Gamma}
+  {\hastype
+    {$\te{sig\{}$\; l_1 \dc \gamma_1 \sm \ldots l_n \dc \gamma_n $\te{\}}$\;}
+    {\hash{min\{u_i\}}}
+  }
+}
+where each $\gamma_i$ is either $A_i$ or ``$A_i = e_j$''\\
+
+\rsep
+\ruleh{Rec}
+{
+\begin{array}{rcl}
+\judget{\Gamma}{\hastype{A_1}{s_1}} \\
+\judget{\Gamma,\Delta}{\hastype{e_1}{A_1}} \\
+\judget{\Gamma,\;\hastype{l_1}{A_1}}{\hastype{A_2}{s_2}} \\
+\judget{\Gamma,\Delta}{\hastype{e_2}{A_2}} \\
+& \vdots & \\
+\judget{\Gamma,\;\hastype{l_1}{A_1},\cdots,\hastype{l_{n-1}}{A_{n-1}}}{\hastype{A_n}{s_n}} \\
+\judget{\Gamma,\Delta}{\hastype{e_n}{A_n}}
+\end{array}
+}
+    {\judge{\Gamma}{
+\begin{array}{c}
+$\te{struct\{}$\; p_1\, a_1\, l_1 \dc A_1 \teq e_1 \sm \ldots  p_n\,a_n\,l_n \dc A_n \teq e_n $\te{\}}$\\
+\hastype{\mbox{}}{\;$\te{sig\{}$\; \ldots l_i \dc \gamma_i \sm \ldots $\te{\}}$\;}
+\end{array}
+    }}
+where $l_i$ is present iff $p_i =\;$\te{public},\\
+$\gamma_i$ is ``$A_i = e_i$'' if $a_i =\;$\te{concrete} otherwise $A_i$\\
+$\Delta \equiv \hastype{l_1}{A_1 = e_1},\cdots,\hastype{l_n}{A_n = e_n}$
+
+\rsep
+\ruleh{Sel}
+    {\judge{\Gamma}{\hastype{e}{\;$\te{sig\{}$\; \ldots l_i \dc \gamma_i \sm \ldots $\te{\}}$\;}}}
+    {\judge{\Gamma}{\hastype{e \dt l_i}{\subst{A_i}{\ldots,l_k}{e\dt l_k,\ldots} }}}
+
+\caption{Core Cayenne typing rules}
+\label{table:typing-1}
+\end{table}
+
+\begin{table}
+\center{
+\ruleh{Conv}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph
+     \judge{\Gamma}{\hastype{B}{s}} \seph
+     \judge{\Gamma}{\eq{A}{B}}}
+    {\judge{\Gamma}{\hastype{a}{B}}}
+\rsep
+\ruleh{Weak}
+    {\judge{\Gamma}{\hastype{A}{s}} \seph
+     \judge{\Gamma}{\delta}}
+    {\judge{\Gamma,\hastype{x}{A}}{\delta}}
+\rsep
+\ruleh{WeakE}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph
+     \judge{\Gamma,\hastype{x}{A}}{\delta}}
+    {\judge{\Gamma,\hastype{x}{A = a}}{\delta}}
+\rsep
+}
+\caption{Core Cayenne typing rules, continued}
+\label{table:typing-2}
+\end{table}
+
+\begin{table}
+\ruleh{Congr}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph \judge{\Gamma}{\hastype{b}{A}} \seph \judge{\Gamma}{\eq{a}{b}}}
+    {\judge{\Gamma}{\eq{C[a]}{C[b]}}}
+where $C[]$ is any context
+
+\rsep
+\ruleh{Red}
+    {\judge{\Gamma}{\hastype{a}{A}} \seph $\ieval{a}{b}$}
+    {\judge{\Gamma}{\eq{a}{b}}}
+
+\rsep
+\ruleh{Lookup}
+    {}
+    {\judge{\Gamma,\hastype{x}{A = e}}{\judge{\Gamma}{\eq{x}{e}}}}
+
+\rsep
+\ruleh{SelE}
+    {\judge{\Gamma}{\hastype{e}{\;$\te{sig\{}$\; \ldots l_i \dc A_i = e_i \sm \ldots $\te{\}}$\;}}}
+    {\judge{\Gamma,\hastype{l_1}{A_1},\cdots,\hastype{l_n}{A_n}}{\eq{e \dt l_i}{e_i}}}
+
+\rsep
+\com{
+\ruleh{Rule}
+    {\judge{\Gamma}{\hastype{a}{A}}}
+    {\judge{\Gamma}{\hastype{a}{A}}}
+\rsep
+    }
+
+\caption{Core Cayenne equality rules}
+\label{tab:eq}
+
+\end{table}
+
+
+
+\begin{table*}
+\center{
+\begin{tabular}{rcl}
+\eval{\te{(}\bs$x\dc t\fun f$\te{)}$e$} {$\subst{f}{x}{e}$}
+\eval{$e\dt l_k$} {$\subst{e_k}{\ldots,l_k}{e\dt l_k,\ldots}$}
+\multicolumn{3}{c}{where $e \equiv$ \te{struct\{}$\ldots\;$\te{public}$\;a_k\;l_k\dc t_k\teq e_k\sm \ldots $\te{\}}} \\
+\eval{\te{case}$\;C_k$\te{@}$t\;e\;$\te{of}$\;\ldots\;C_k\;x_k\fun\;e_k\sm\ldots$} { $\subst{e_k}{x_k}{e}$ }
+\end{tabular}
+\caption{Core Cayenne evaluation rules}
+\label{tab:eval}
+}
+\end{table*}
+
+\newcommand\blob{\bullet}
+\newcommand\hashn{\hash{1}}
+\begin{table*}
+\center{
+\begin{tabular}{rcl}
+$($\bs$(x\dc t)\fun f)^*$ & $\rightarrow$ & \bs$x\fun f^*$, if $t\in\hashn$ \\
+$($\bs$(x\dc t)\fun f)^*$ & $\rightarrow$ & $f^*$, if $t\notin\hashn$  \\
+$(f\;e)^*$ & $\rightarrow$ & $f^*\;e^*$, if $e\in t$ and $t\in\hashn$ \\
+$(f\;e)^*$ & $\rightarrow$ & $f^*$, if $e\in t$ and $t\notin\hashn$ \\
+$((x\dc t)\fun f)^*$ & $\rightarrow$ & $\blob$ \\
+
+\te{struct\{}$\;l_1\dc t_1\teq e_1\sm \ldots\;l_n\dc t_n\teq e_n$\te{\}}$^*$ & $\rightarrow$ 
+        & \te{struct\{}$\ldots\;l_k\teq e_k^*\ldots$\te{\}}, for those $l_k$ where $t_k\in\hashn$ \\
+$(e\dt l)^*$ & $\rightarrow$ & $e^*\dt l$ \\
+\te{sig\{} $\;\ldots\;$ \te{\}}${}^*$ & $\rightarrow$ & $\blob$ \\
+
+$(C$\te{@}$t)^*$ & $\rightarrow$ & $C$ \\
+$($\te{case}$\;e\;$\te{of}$\;C_1\;x_1\fun \;e_1\sm \ldots\;C_n\;x_n\fun \;e_n)^*$ & $\rightarrow$ 
+        & \te{case}$\;e^*\;$\te{of}$\;C_1\fun \;e_1^*\sm \ldots\;C_n\fun \;e_n^*$ \\
+\te{data}$\;\ldots\;{}^*$ & $\rightarrow$ & $\blob$ \\
+
+$\hash{n}^*$ & $\rightarrow$ & $\blob$ \\
+$x^*$ & $\rightarrow$ & $x$, if $x\in t, t\in\hashn$ \\
+$x^*$ & $\rightarrow$ & $\blob$, if $x\in t, t\notin\hashn$ \\
+
+\end{tabular}
+\caption{Type erasure transformation}
+}
+\end{table*}
+
+\begin{table*}
+\center{
+\begin{tabular}{rcl}
+\evalu{\te{(}\bs$x\fun f$\te{)}$e$} {$\subst{f}{x}{e}$}
+\evalu{$e\dt l_k$} {$\subst{e_k}{\ldots,l_k}{e\dt l_k,\ldots}$}
+\multicolumn{3}{c}{where $e \equiv$ \te{struct\{}$\ldots\;a_k\;l_k\teq e_k\sm \ldots $\te{\}}} \\
+\evalu{\te{case}$\;C_k\;e\;$\te{of}$\;\ldots\;C_k\;x_k\fun\;e_k\sm\ldots$} 
+  { $\subst{e_k}{x_k}{e}$ }
+\end{tabular}
+\caption{Core Cayenne typeless evaluation rules}
+}
+\end{table*}
+%%%%%}
+
+\subsection{Type checking}
+
+Type checking of Cayenne is basically simple, just because it is
+type checking rather than type deductions, like e.g.\ Haskell uses.
+Type checking proceeds in a single traversal of the syntax tree.
+On the way down the environment ($\Gamma$) is extended with the
+types (and sometimes values) of bound identifiers.  Since Cayenne
+has explicit types the type of each bound identifier is known.
+On the way up the type of each subexpression can the be computed
+and checked.
+A complication
+arises when a typing rules has more than one occurence of a type,
+like $A$ in the {\sf App} rule in table \ref{table:typing-1}.
+For these
+cases we need to check if the two types derived from the bottom
+up derivation are the same, and if they are not identical the {\sf Conv} rule
+can be used to make them equal (assuming the program is type correct).
+For a strongly normalizing language without translucent types the {\sf Conv}
+rule is uses $=_\beta$ for $\eq{}{}$.  This relation is
+easy to implement; just compute the normal forms of the two
+types and compare those.  Since Cayenne is not strongly normalizing
+this is not an option.  The equivalence of two arbitrary expression is
+undeciable. For this reason, we can not implement anything but an
+approximation of the {\sf Conv} rule and the equality rules (table \ref{tab:eq}).
+This is a tricky part of the
+Cayenne type checker since if the equivalence test is
+implemented in a naïve way type checking can easily loop.
+
+%%%\subsection{Soundness}
+
+\subsection{Undecidability in practice}
+So type checking Cayenne is undecidable.  This is unfortunate, but
+unavoidable for a language like Cayenne.
+How bad is it in
+practice to have an undecidable type checker?  This question can only
+be answered by practical experiments.
+The Cayenne programs we have tried
+to date range from ordinary Haskell style programs, to programs
+using dependent types, to proofs of mathematical propositions.
+The total size of these programs are only a few thousand lines,
+but so far the experience shows that it works remarkably well.  
+
+Having undecidable type checking means
+that the type checker might loop.  This is clearly not a user friendly
+type checker.  So instead the implemented type checker has an upper bound on the number of
+reduction steps that it may perform.  If this limit is exceeded the
+type checker will
+report this.  Most of the type errors from the Cayenne compiler are
+similar to those that any other language would give.  Very
+infrequently does the type checker report that it did not terminate within
+the prescribed number of steps.  Most often, this is the result of a
+type error, but sometimes the type expression is just too complicated
+and the number of reduction steps must be increased (the number of
+reduction steps is a compiler flag).
+
+The type checker can thus give one of three answers: type correct (meaning
+that the program will not go wrong when run), type incorrect, or ``don't know''\footnote{
+On a real machine Hindley-Milner type checking has the same problem, but the
+third alternative is usually spelled ``Out of memory'' instead.}.
+
+There are other languages with undecidable type checking, e.g.,
+Quest \cite{cardelli:quest} (which has a type system based on
+$F_{\omega <}$) and Gofer \cite{jones:gofer-impl}, but it is usually
+more difficult to make these systems loop.
+%%  C++  ???
+
+\section{Cayenne as a proof system}
+Since Cayenne has unrestricted recursion, this means that every type is
+inhabited by at least one element, namely $\perp$.  Thus,
+proofs made in Cayenne cannot really be trusted as proofs, since any
+proposition can be proved by $\perp$.  If proper checking is done, it
+is often\footnote{Not always, of course, since then we would have to solve the
+halting problem.}
+possible to ensure that a proof is valid, but no such
+checking is done at the moment.
+
+Even if a proofs expressed in Cayenne cannot be trusted because
+they pass the type checker it is still valuable to have the
+encoding of predicate logic in the language.  Firstly, it allows
+us to express properties about programs within the language even
+if we provide no proofs at all.  It is better to have this ability
+within the language than to use comments or leave out those
+properties completely.
+Secondly, even if a proof cannot be trusted one can argue that a
+proof that has been checked, but may be $\perp$, is better than
+a proof that is not checked at all.
+
+%But even if a proof cannot be completely trusted, or even if the proof
+%is omitted, it is very useful to have a type language rich enough to
+%express properties that you want to hold.
+
+\section{Implementation}
+Implementing Cayenne is fairly straight forward; it is like any
+other functional language.  One decision that has to be made
+is what to do with types at runtime.
+
+\subsection{Erasing types}
+\label{sec:erasetypes}
+Cayenne treats types like first class values.  Does that mean
+that the types have to be present at run time, passed around as
+arguments, stored in data structures, etc?  No, they do not.  There is no
+language construct, e.g., \te{casetype}, that allows a ground value --- which is all that can be
+observed in a program --- to depend on a type. Hence, types do not have to be
+present at run time.  Erasing types consists of removing all arguments
+and record components that have type $\hash{n}$ or are functions
+computing something of type $\hash{n}$.
+In \cite{cardelli:phase} it is claimed that type erasing is not possible
+and that the distinction between compile-time and run-time is blurred
+with dependent types.  We claim that this is not the case with
+the variant of dependent types used in Cayenne.
+
+%{\sf We have proved that reduction before and after erasing the types
+%of a term gives the same result.  This proof will be in the full paper.}
+
+\nocom{
+What we need to show is that evaluating an expression with types erased
+yields the same result as evaluating it with the types left in.
+
+{\bf Definition} An expression, $e$, has {\em value type} if $e \in t$ and 
+$t \in \hash{1}$
+
+{\bf Theorem} If $e$ has value type and \imeval{e}{v} then \imevalu{e^*}{v^*}.
+
+We first prove a useful lemma.
+
+{\bf Lemma}
+If $e$ has value type, then $e^*$ contains no $\blob$.
+
+{\bf Proof}
+We assume that the expression
+to transform is of value type, and show that each invocation of the transformation
+on a subexpression is also on an expression of value type.
+
+{\bf Cases}
+A $\lambda$-expression \bs$(x\dc t)\fun f$ has type $(x\dc t)\fun r$, where $r$
+is the type of $f$.  According to the assumption $(x\dc t)\fun r$ has type
+$\hashn$
+and typing rule {\sf Pi} shows that then $r$ has type $\hashn$ as well.  Thus the
+transformation of $f$ is also on an expression of value type.
+
+For an application $f\; e$, according to the definition of ${}^*$, the transformation
+is only applied to $e$ if it is of value type.  $f$ has type $(x\dc t)\fun r$ and
+$f\; e$ has type $r$, if $r$ has type $\hashn$ then, again according to typing rule 
+{\sf Pi}, $(x\dc t)\fun r$ has type $\hashn$, so the transformation of $f$ fulfills
+the assumption.
+
+The transformation cannot be applied to a function type since this does not
+have value type.
+
+For a record value \te{struct\{}$\; \ldots\;$\te{\}} the transformation is only
+applied to subexpressions of value type according to the definition of ${}^*$.
+
+If a record selection $e\dt l$ is of value type then the field $l$ must be of value
+type.  If one field of a record type type has type $\hashn$ then the whole record
+type has type $\hashn$ according to typing rule {\sf Prod} (which takes the $min$
+of all the types), so the subexpression $e$ (of $e\dt l$) must have value type.
+
+The transformation cannot be applied to a \te{sig\{}$\; \ldots\;$\te{\}} value
+since it is not of value type.
+
+The lemma is trivially true for a contructor expression.
+
+For a \te{case} expression the transformation is applied to the scrutinized expression,
+which is always of value type (typing rule {\sf Data}) and to all the right hand
+sides.  The right hand sides are of value type if the whole case expressions is.
+
+The transformation cannot be applied to a \te{data} value since it is not of value type.
+
+The transformation cannot be applied $\hashn$ since it is not of value type.
+
+The lemma is true for variables according to the definition of ${}^*$.
+
+{\bf Corollary} A transformed expression of value type contains no variables that were
+not of value type in the original expression.
+
+{\bf Proof} Variables that are not of value types are translated to $\blob$,
+but there are no $\blob$ in the expression, hence there can be such variables.
+\medskip
+
+{\bf Lemma} The substitution lemma states that type erasure
+commutes with substittion: $(\subst{e}{x}{t})^* = \subst{e^*}{x}{t^*}$.
+
+{\bf Proof} By structural induction over the expression syntax.
+\medskip
+
+We can now return to proving the type erasure theorem.  First we prove that
+if $e$ has value type and \ieval{e}{f} then \ievalu{e^*}{f^*} or $e^* = f^*$.  The theorem then
+follows simply by induction on the length of the reduction sequence.
+
+The single step version of the theorem is proved by case analysis on the three different
+(typed) reduction kinds.
+
+{\bf Cases} If the reduction is \ieval{\te{(}$\bs$ x\dc t\fun f \te{)}e}{\subst{f}{x}{e}} then
+the translation of the redex is either $\te{(}$\bs$ x\fun f^* \te{)}e^*$ in which case there
+is a corresponding untyped reduction step (according to the substitution lemma).
+Or the translation of the redex is $f$ (if $x$ and $e$ do not have value type).
+In this case $f^* = \subst{f^*}{x}{e^*}*$ since $x$ does not occur in $f^*$
+(according to the corollary).
+
+If the reduction is a selection the selected label could either be left in the transformed
+\te{struct} or it could have been erased.  But since the expression $e.l$ has value type
+this means that the label has value type and it must thus be left in the \te{struct}.
+There is then an exactly corresponding untyped reduction.
+
+If the reduction is a case reduction there is an exactly corresponding untyped reduction.
+
+QED
+}
+
+\subsection{Keeping types}
+By keeping types at runtime it is possible to do computations
+on types and base control decision on the dynamic type of values.
+With runtime types we could have a \te{casetype} language construct.
+Keeping types around at runtime have some advantages, like mostly tag-free
+garbage collection, as used in TIL, \cite{morrisett:til,morrisett:phd}.
+
+\subsection{The current implementation}
+The current implementation of Cayenne is written in Haskell and
+translates Cayenne to untyped LML.  The compiler consists of about
+5500 lines, a third of which is the actual type checker.
+The compiler parses Cayenne, does type checking and various other
+checks, erases types and then translates the resulting code into LML.
+The LML code is then compiled with the LML compiler, \cite{augustsson:chalmersLML},
+with type checking turned off.  This works because the LML compiler does
+not rely on a the fact that the program is type correct in the Hindley-Milner
+type system; all the compiler assumes is that the program ``makes sense''.
+
+A snapshot of the current
+implementation can be found on the Web at\\
+{\tt http://www.cs.chalmers.se/\~{}augustss/cayenne/}.
+
+
+
+\section{Related work}
+There are many logical frameworks (proof checking systems) that are based on
+dependent types.  Some examples, among many, are
+ALF \cite{magnussonnordstrom:alf,nordstrom:nijmegen,augustsson:alf},
+CoC \cite {coquand:constructions,coquand:information},
+ELF \cite{pfennig:elf,pfennig:elf91,harper:lf-jacm},
+Lego \cite{pollack:thesis},
+and NuPRL \cite{constable:nuprl}.
+All these systems are primarily designed for making (constructive)
+proofs even if many of them can also execute the resulting proofs
+or extract a program from them.  Our approach is different in that we
+want to make a programming language, not a proof system, but of course
+there are big similarities.
+
+There are few programming languages with dependent types.
+Cardelli's Quest, \cite{cardelli:quest}, have similarities with
+Cayenne, but the final version of Quest
+does not have the full dependency where types
+can depend on values.
+Russell, \cite{boehm:russell}, has dependent types, but the notion
+of type equality is ``name equality'' rather than the ``structural
+equality'' of Cayenne.  Russell does not do full evaluation during
+type checking so it would not be able to do, e.g., the \te{printf} 
+example.  Russell also has a different notion of what a type is.
+
+
+%? \cite{coquand:patternmatching,coquand:statusofpatternmatching}
+
+\section{Future work}
+There are many ways to continue the work on Cayenne and related
+languages.  First, and foremost, is to gain more experience with
+a language with dependent types, both to see how dependent types
+can be used and to see how undecidable type checking works out.
+
+Another interesting line of work is to make a partial evaluator for
+this kind of language.  Since types and values are combined, a partial evaluator would
+serve both as a type specializer 
+(as used in, e.g., \cite{augustsson:overloading,jones:overloading})
+and a traditional partial evaluator.
+
+To make the record types more useful, subtyping could be added.
+Subtyping in the presence of dependent types has been studied in \cite{betarte98:thesis}.
+
+As a proof of concept the Cayenne compiler should, of course, be
+rewritten in Cayenne.
+
+%%The most immediate work, though, is to prove that the Cayenne type
+%%system is sound.  
+
+%\section{Conclusions}
+
+\section{Acknowledgments}
+A big thanks to Jessica for improving my English.  The programming logic group
+at Chalmers has over the years provided me with enough background material to finally try to
+make a programming language with dependent types.  A special thanks to Theirry
+Coquand for fruitful discussions and examples of how to write type checkers for
+dependent types.  
+Thomas Johnsson, Niklas R\"ojemo and Dan Synek provided me with feedback
+on this paper as did the anonymous ICFP referees.
+
+% \tableofcontents
+
+
+%\pagebreak
+%%\renewcommand{\baselinestretch}{0.90}
+\bibliography{/usr/local/lib/pmgrefs}
+\bibliographystyle{alpha} 
+
+
+
+%%%\com{
+%\onecolumn
+\pagebreak
+\appendix
+\section{The Eq class}
+\label{app:equiv}
+{
+\renewcommand{\baselinestretch}{0.90}
+\small
+\begin{verbatim}
+module example$Eq = 
+#include Prelude
+struct
+
+data Absurd =
+
+data Truth = truth
+
+absurd :: (a :: #) |-> Absurd -> a
+absurd i = case i of { }
+
+type (<=>) a b = sig { impR :: a->b; impL :: b->a; }
+
+concrete
+Lift :: Bool -> #
+Lift (False) = Absurd
+Lift (True)  = Truth
+
+concrete
+LiftBin :: (a:: #) |-> (a -> a -> Bool) -> Rel a
+LiftBin |a op = \(x::a) -> \(y::a) -> Lift (op x y)
+
+type Rel a = a -> a -> #
+
+concrete
+Refl :: (a :: #) |-> Rel a -> #
+Refl |a R = (x::a) -> x `R` x
+
+concrete
+Symm :: (a :: #) |-> Rel a -> #
+Symm |a R = (x,y::a) -> x `R` y -> y `R` x
+
+concrete
+Trans :: (a :: #) |-> Rel a -> #
+Trans |a R = (x,y,z::a) -> x `R` y -> y `R` z -> x `R` z
+
+concrete
+Equiv :: (a :: #) |-> Rel a -> #
+Equiv R = sig 
+  refl :: Refl R
+  symm :: Symm R
+  trans :: Trans R
+
+--------
+-- The Eq "class", with equivalence proof
+type Eq a = sig
+  (==) :: a -> a -> Bool
+  equiv :: Equiv (LiftBin (==))
+
+--------
+-- Equality on Unit
+Eq_Unit :: Eq Unit
+Eq_Unit = struct 
+  (==) (unit) (unit) = True
+
+  equiv = struct
+    refl (unit) = truth
+    symm (unit) (unit) p = p
+    trans (unit) (unit) (unit) p q = p
+
+--------
+-- Equality on Bool
+Eq_Bool :: Eq Bool
+Eq_Bool = struct
+  (==) (False) (False) = True
+  (==) (True)  (True)  = True
+  (==) _       _       = False
+
+  equiv = struct
+    refl (False) = truth
+    refl (True)  = truth
+    symm (False) (False) p = p
+    symm (False) (True)  p = absurd p
+    symm (True)  (False) p = absurd p
+    symm (True)  (True)  p = p
+    trans (False) (False) (False) p q = q
+    trans (False) (False) (True)  p q = absurd q
+    trans (False) (True)  _     p q = absurd p
+    trans (True)  (False) _       p q = absurd p
+    trans (True)  (True)  (False) p q = absurd q
+    trans (True)  (True)  (True)  p q = q
+
+--------
+
+private
+liftAndL :: (x,y::Bool) -> 
+            Lift (x && y) -> Pair (Lift x) (Lift y)
+liftAndL (False) _       a = absurd a
+liftAndL (True)  (False) a = absurd a
+liftAndL (True)  (True)  t = (t, t)
+
+private
+liftAndR :: (x,y::Bool) -> 
+            Pair (Lift x) (Lift y) -> Lift (x && y)
+liftAndR (False) _       (a, _) = a
+liftAndR (True)  (False) (_, a) = a
+liftAndR (True)  (True)  (t, _) = t
+
+private
+isoEquiv :: (a :: #) |-> 
+     (p, q :: Rel a) -> ((x, y :: a) -> 
+     p x y <=> q x y) -> Equiv p -> Equiv q
+isoEquiv p q iso eqp = struct
+  refl x = (iso x x).impR (eqp.refl x)
+  symm x y lp = 
+    (iso y x).impR (eqp.symm x y ((iso x y).impL lp))
+  trans x y z lp lq = (iso x z).impR
+    (eqp.trans x y z ((iso x y).impL lp) ((iso y z).impL lq))
+
+-- Equality on pairs.
+Eq_Pair :: (a,b :: #) |-> Eq a -> Eq b -> Eq (Pair a b)
+Eq_Pair eqa eqb = struct
+  (==) (x, x') (y, y') = eqa.(==) x y && eqb.(==) x' y'
+
+  private
+  eq :: Pair a b -> Pair a b -> #
+  eq (x, x') (y, y') = 
+    Pair (LiftBin eqa.(==) x y) (LiftBin eqb.(==) x' y')
+
+  private
+  eqEq :: (x,y::Pair a b) -> eq x y <=> Lift (x == y)
+  eqEq (x, x') (y, y') = struct
+    impR p = liftAndR (eqa.(==) x y) (eqb.(==) x' y') p
+    impL p = liftAndL (eqa.(==) x y) (eqb.(==) x' y') p
+
+  private
+  equivEq :: Equiv eq
+  equivEq = struct
+    refl (x, x') = (eqa.equiv.refl x, eqb.equiv.refl x')
+    symm (x, x') (y, y') (pxy, pxy') = 
+      (eqa.equiv.symm x y pxy, eqb.equiv.symm x' y' pxy')
+    trans (x, x') (y, y') (z, z') (pxy, pxy') (pyz, pyz') = 
+      (eqa.equiv.trans x y z pxy pyz, 
+       eqb.equiv.trans x' y' z' pxy' pyz')
+
+  equiv = isoEquiv eq (LiftBin (==)) eqEq equivEq
+\end{verbatim}
+}
+
+
+\section{The tautology function}
+\label{app:taut}
+{
+\renewcommand{\baselinestretch}{0.90}
+\small
+\begin{verbatim}
+module example$taut =
+#include Prelude
+struct
+data Nat = Zero | Succ Nat
+
+concrete
+TautArg :: Nat -> #
+TautArg (Zero)   = Bool
+TautArg (Succ m) = Bool->TautArg m
+
+taut :: (n::Nat) -> TautArg n -> Bool
+taut (Zero)   x = x
+taut (Succ m) x = taut m (x True) && taut m (x False)
+
+
+module example$tauttest =
+#include Prelude
+open example$taut use Nat, Zero, Succ, taut, TautArg in
+
+let id :: Bool -> Bool
+    id x = x
+
+    implies :: Bool -> Bool -> Bool
+    implies x y = not x || y
+
+    equ :: Bool -> Bool -> Bool
+    equ x y = implies x y || implies y x
+in  do Monad_IO
+       putStrLn (System$Bool.show (taut Zero True))
+       putStrLn (System$Bool.show (taut (Succ Zero) id))
+       putStrLn (System$Bool.show (taut (Succ (Succ Zero)) equ))
+\end{verbatim}
+}
+
+\end{document}

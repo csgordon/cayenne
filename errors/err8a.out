@@ -1,0 +1,2 @@
+cayenne: Compilation errors:
+"err8a.cy", line 2, column 0, Duplicate definition of "x", other definition at line 3, column 0

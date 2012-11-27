@@ -1,0 +1,9 @@
+cayenne: Compilation errors:
+"err10a.cy", line 5, column 4, Type error: chkT
+Expression
+D@U
+  has type
+data D
+  but should have type
+data C
+

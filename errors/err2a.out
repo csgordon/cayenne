@@ -1,0 +1,2 @@
+cayenne: Compilation errors:
+"err2a.cy", line 1, column 0, Syntax error: found token "cayenne", expected "native", "module", or "<EOF>"

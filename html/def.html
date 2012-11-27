@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Definitions</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Definitions</h1>
+There are several improvements to the basic form of definitions in
+records.
+<p>
+<h2>Signature definitions</h2>
+Haskell style definitions with a type signature and a definition can
+be used.
+<br><br><code>
+<i>defn</i> ::= <i>labelid</i> :: <i>type</i> ; <i>labelid</i> = <i>expr</i><br>
+</code><br><br>
+Example:
+<pre>x :: Int;
+x = 5;</pre>
+
+<h2>Function definitions</h2>
+Haskell style function definitions can also be used, i.e., when the
+right hand side of a definitions is a lambda expression the bound
+variables can be moved to the left.  If there is a signature as well
+the types on the variables can be left out.
+<br><br><code>
+<i>defn</i> ::= <i>labelid</i> :: <i>type</i> ; <i>labelid</i>
+   <i>varid</i> ... = <i>expr</i><br>
+</code><br>
+Example:
+<pre>inc :: Int->Int;
+inx x = x+1;</pre>
+
+<h2>Function definitions by pattern matching</h2>
+Functions can be defined with pattern matching, as in Haskell.
+Nested patterns as well wildcards, '_', can be used.
+<p>
+Example:
+<pre>not :: Bool -> Bool;
+not (False) = True;
+not (True) = False;</pre>
+<p>
+Patterns in Cayenne are similar to those in Haskell.
+<br><br><code>
+<i>defn</i> ::= <i>labelid</i> :: <i>type</i> ; <i>labelid</i>
+   <i>pat</i> ... = <i>expr</i><br>
+<i>pat</i> ::= _ | <i>varid</i> | <i>varid</i>@<i>pat</i> | (<i>conid</i>
+<i>pat</i> ... )
+</code><br>
+
+
+<h2>Type definitions</h2>
+For definitions of type <samp>#</samp> there is a special shorthand.
+The <samp>:: #</samp> part can be left out if the keyword
+<samp>type</samp> is prepended to the definition.  Furthermore, if the
+an argument to a <samp>type</samp> definition has type <samp>#</samp>
+the type can be left off.
+<br><br><code>
+<i>defn</i> ::= type <i>labelid</i> <i>vardecl</i> ... = <i>type</i><br>
+<i>vardecl</i> ::= <i>varid</i> | ( <i>varid</i> :: <i>type</i> )
+</code><br><br>
+Example:
+<pre>type MyInt = Int;
+type PairX a = Pair a a;
+</pre>
+
+<h2>Data type definitions</h2>
+When definitions a data type you normally want ordinary names for the
+constructors.  A Haskell-like data type definition construct can be
+used to define a type and the constructors at the same time.
+<br><br><code>
+<i>defn</i> ::= data <i>labelid</i> <i>vardecl</i> ... = <i>condef</i> | ...<br>
+</code><br>
+Example:
+<pre>data Bool = False | True;</pre>
+is equivalent to
+<pre>Bool :: # = data False | True;
+False :: Bool = False@Bool;
+True :: Bool = True@Bool;
+</pre>
+Example:
+<pre>data List a = Nil | Cons a (List a);</pre>
+is equivalent to
+<pre>List :: # -> # = \ (a :: #) -> data Nil | Cons a (List a);
+Nil :: (a :: #) |-> List a = Nil@(List a);
+Cons :: (a :: #) |-> a -> List a -> List a = Cons@(List a);
+</pre>
+
+<h2>Open definition</h2>
+The <samp>open</samp> definition provides a convenient way to get
+access to many components of a record and use them locally within
+another record.
+<br><br><code>
+<i>defn</i> ::= open <i>expr</i> use [<i>modifier</i>] <i>varid</i> :: <i>type</i> [ =
+<i>varid</i> ], ... ;
+</code><br><br>
+
+The definition<br>
+<samp>open e use i1::t1=i1', i2::t2=i2', ... ;</samp><br>
+is (semantically) equivalent to the definitions<br>
+<samp>private i1::t1 = e.i1'; private i2::t2 = e.i2'; ... </samp>
+<p>
+If the second <i>varid</i> is left out it is assumed to be the same as
+the first.  The types can be omitted.  So you normally write just<br>
+<samp>open e use i1, i2, ... ;</samp>
+<p>
+The default visibility is private, but this can be overridden either
+in front of the open definition, or individually.
+
+<h2>Omitting type signatures</h2>
+If a definition is not a function definition, and it is not recursive
+(or part of a mutual recursive group) the type signature can almost
+always be dropped.
+Example:
+<pre>struct { x = 5; y = 7; }</pre>
+<p>
+Type signatures can also me omitted if the record that the definition
+occurs in has a type signature.
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Wed Oct 21 15:21:29 CEST 1998
+<!-- hhmts end -->
+</body> </html>

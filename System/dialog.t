@@ -1,0 +1,16 @@
+import excArithmetic: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import excPipe: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import excHangup: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import excTerminate: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import excInterrupt: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import excError: Exception {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import type Exception == Int;
+import type SigAct = SAIgnore + SADefault + SACatch (String->Dialog);
+import stdecho: String {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import stderr: String {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import stdout: String {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import stdin: String {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};
+import type Dialog == ((List Response)->(List Request));
+import type IOError = WriteError String + ReadError String + SearchError String + FormatError String + OtherError String;
+import type Response = Success + Str String + Bn Bin + Failure IOError + Tag (List (String # Char)) + BinTag (List (String # Bin)) + StrList (List String) + Fil File + Dbl Double + AsyncInput AsyncInput + SocketResponse SocketResponse + XResponse XResponse + IntResp Int + SelectResp (List (#3 (List File) (List File) (List Double))) + SigActResp SigAct + CCallResp _CUnion + GetTimeZoneResp Bool String Int + BVec _ByteVector;
+import type Request = ReadFile String + WriteFile String String + AppendFile String String + ReadBinFile String + WriteBinFile String Bin + AppendBinFile String Bin + DeleteFile String + StatusFile String + ReadChan String + AppendChan String String + ReadBinChan String + AppendBinChan String Bin + StatusChan String + Echo Bool + GetArgs + GetEnv String + SetEnv String String + ReadChannels (List String) + ReadBinChannels (List String) + CreateProcess Dialog + CreateDirectory String String + OpenFile String Bool + OpenBinFile String Bool + CloseFile File + ReadVal File + ReadBinVal File + WriteVal File Char + WriteBinVal File Bin + Sleep Double + ChangeDirectory String + GetTime + DeleteDirectory String + System String + ReadDirectory String + XCommand (#3 DisplayT Window XCommand) + GetAsyncInput + GetCpuTime + GetProgName + GetLocalTime + SigAction Exception SigAct + Exit Int + ReadFileScattered String (List Int) + Select (List Descriptor) + SocketRequest SocketRequest + XRequest (#3 DisplayT Window XRequest) + ReadFileFast String + RenameFile String String + GetCurrentDirectory + H_OpenFile String Int + H_Close File + H_FileSize File + H_IsEOF File + H_SetBuffering File Int + H_GetBuffering File + H_Flush File + H_Seek File Int Int + H_GetFlags File + H_GetChar File + H_UnGetChar File Int + H_PutChar File Int + H_PutString File String + H_GetFile File + H_Select (#3 (List File) (List File) (List Double)) + H_CCall _CPointer (List _CUnion) _CUnion + __RunAnswer __Answer + H_GetTimeZone Double + H_GetErrno + H_GetPermissions String + H_Chmod String Int + H_PutBV File _ByteVector + H_GetBV File;

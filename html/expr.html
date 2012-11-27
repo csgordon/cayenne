@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Expressions</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Expressions</h1>
+Types and expressions share the same syntactic category in Cayenne,
+so everything that is said about expressions below also holds for
+types:
+<br><br><code>
+<i>type</i> ::= <i>expr</i>
+</code><br><br>
+
+<a name="Var">
+<h2>Variables</h2>
+</a>
+Variables are simply written as themselves in an expression.
+<br><br><code>
+<i>expr</i> ::= <i>varid</i>
+</code><br><br>
+Example: <samp>x</samp>
+
+<a name="App">
+<h2>Applications</h2>
+</a>
+Function application is written with juxtaposition of two expressions.
+<br><br><code>
+<i>expr</i> ::= <i>expr</i> <i>expr</i>
+</code><br><br>
+Example: <samp>f x</samp><br>
+<samp>(f x) (g x)</samp>
+<h4>Syntactic sugar</h4>
+For convenience operator identifiers can be used with infix notation.
+There is a <a href="syntax.html#prectable">fixed set of operator precedences</a>.
+<p>
+Example: <samp>x + y</samp><br>
+is the same as <samp>(+) x y</samp>.
+
+<a name="Fun">
+<h2>Functions</h2>
+</a>
+Function expressions are written as lambda expressions.  The bound
+variable must be given a type.
+<br><br><code>
+<i>expr</i> ::=  \ (<i>varid</i> :: <i>type</i>) -> <i>expr</i>
+</code><br><br>
+Example: <samp>\ (x::Int) -> x+1</samp><br>
+<samp>\ (a :: #) -> \ (x :: a) -> x</samp>
+
+<a name="Pi">
+<h2>Function type</h2>
+</a>
+The function type is written much like a lambda expression, but there
+is no leading \.  Since Cayenne has dependent types the function type
+binds a variable (of the argument type) that may occur in the result type.
+<br><br><code>
+<i>expr</i> ::=  (<i>varid</i> :: <i>type</i>) -> <i>type</i>
+</code><br><br>
+Example: <samp>(x::Int) -> F x</samp>
+<h4>Syntactic sugar</h4>
+If the variable does not occur in the result type the function type is
+written as in Haskell.
+<br><br><code>
+<i>expr</i> ::= <i>type</i> -> <i>type</i>
+</code><br><br>
+Example: <samp>Int -> Int</samp>
+
+<h2>The type of types</h2>
+The type of types is written as <samp>#</samp>.
+<br><br><code>
+<i>expr</i> ::= #
+</code><br><br>
+
+<a name="Data">
+<h2>Data types (sums)</h2>
+</a>
+A data type is an ordered labelled sum.  A data type is written thus
+<br><br><code>
+<i>expr</i> ::= data <i>condef</i> | ...<br>
+<i>condef</i> ::= <i>conid</i> <i>type</i> ...<br>
+<i>conid</i> ::= <i>varid</i>
+</code><br><br>
+Example: <samp>data False | True</samp><br>
+This is a data type with two contructors, <samp>False</samp> and
+<samp>True</samp> which both have type <samp>data False | True</samp>.
+<p>
+Example: <samp>data C1 | C2 Int | C3 Int Bool</samp><br>
+This is a data type, call it <samp>T</samp>, with three constructors, <samp>C1</samp> of
+type <samp>T</samp>, <samp>C2</samp> of type <samp>Int->T</samp>, and
+<samp>C3</samp> of type <samp>Int->Bool->T</samp>.
+<p>
+To make recursive types you need a recursive definition, which is
+introduced below.
+<p>
+Note that a data type does not intruduce any new bound variables.  The
+constructors of a data type have no special status.
+
+<a name="Cons">
+<h2>Constructors</h2>
+</a>
+To use a constructor of a data type you need to give both the name of
+the constructor and the type that it belongs to.
+<br><br><code>
+<i>expr</i> ::= <i>conid</i> @ <i>type</i>
+</code><br><br>
+Example: <samp>True@(data False|True)</samp><br>
+This is the second constructor in the type <samp>data False|True</samp>.<br>
+<p>
+Example: <samp>C2@(data C1 | C2 Int | C3 Int Bool)</samp><br>
+This is second constructor and the expression has type
+<samp>Int->(data C1 | C2 Int | C3 Int Bool)</samp>.
+<p>
+The type can in many cases be written as <samp>_</samp> if the type
+if the constructors is obvious from the context.
+Example: <samp>C2@_</samp>
+<a name="Case">
+<h2>Case</h2>
+</a>
+Case expressions are used to scrutinize expressions of sum type.
+It has the following form:
+<br><br><code>
+<i>expr</i> ::= case <i>expr</i> of { <i>casearm</i> ; ... }<br>
+<i>casearm</i> ::= (<i>conid</i>) -> <i>expr</i>
+</code><br><br>
+In a case expression there is no need to give the type of the
+constructors in the patterns.
+<p>
+Example: <samp>case x of { (True) -> False; (False) -> True; }</samp><br>
+<samp>
+case y of {<br>
+&nbsp;&nbsp;(C1) -> 0;<br>
+&nbsp;&nbsp;(C2) -> \(x::Int) -> x;<br>
+&nbsp;&nbsp;(C3) -> \(y::Int) -> \(b::Bool) -> y;<br>
+}
+</samp>
+<h4>Syntactic sugar</h4>
+If there are lambda expressions on the right hand side of the patterns
+the variables in these can be moved to the pattern, and the type on
+them dropped.
+<p>
+Example:<br>
+<samp>
+case y of {<br>
+&nbsp;&nbsp;(C1) -> 0;<br>
+&nbsp;&nbsp;(C2 x) -> x;<br>
+&nbsp;&nbsp;(C3 y b) -> y;<br>
+}
+</samp>
+Note how all constructor patterns are in parenthesis; this is to have
+a syntactic way of distinguishing constructor patterns and variable patterns.
+
+<a name="Struct">
+<h2>Record formation</h2>
+</a>
+Records are unordered labelled products.  Record values are formed
+according to the rule
+<br><br><code>
+<i>expr</i> ::= struct { [<i>modifier</i>] <i>defn</i> ; ... }<br>
+<i>defn</i> ::= <i>labelid</i> :: <i>type</i> = <i>expr</i><br>
+<i>labelid</i> ::= <i>varid</i>
+</code><br><br>
+A record can contain an arbitrary number of components.  Each
+component has a label, a type, and a value.  The label identifiers are
+bound within the record construction, but unbound outside it.  The
+bindings are mutually recursive.
+<p>
+There is a lot of syntactic suger for the <a
+href="def.html">definitions in records</a>.
+<p>
+Note that the word <samp>struct</samp> can be omitted when the layout rule is not used.
+<h4>Record modifiers</h4>
+Each component in a record can have a modifier that affects its
+visibility.
+<ul>
+  <li><samp>abstract</samp>
+      means that the definition (value) of the component is not
+      visible in the type of the record.  This is the default for
+      value-like definitions.
+  <li><samp>concrete</samp>
+      is the opposite of <samp>abstract</samp>.  It is the default for
+      type-like definitions.
+  <li><samp>public</samp>
+      means that the component is available for selection outside the
+      record.  It is the default.
+  <li><samp>private</samp>
+      is the opposite of <samp>public</samp> and is used to make local
+      definitions.
+</ul>
+<code>
+<i>modifier</i> ::= abstract | concrete | public | private
+</code><br><br>
+
+<p>
+Example:<br>
+<samp>struct { x :: Int = 5; y :: Int = 4; }</samp><br>
+<samp>struct { idInt :: Int->Int = \ (x::Int) -> x; two :: Int = idInt 2; }</samp><br>
+<samp>struct { private x :: Int = 2+5; x2 :: Int = x*x; }</samp><br>
+<samp>struct { concrete c :: Int = 2; inc :: Int->Int = \(x::Int)->x+1; }</samp>
+
+<h4>Syntactic sugar</h4>
+By putting a modifier in front a record construction the default
+visibility changes to the given mode.
+<p>
+Example: <samp>concrete struct { x::Int=5; y::Int=7; }</samp>
+
+<a name="Dot">
+<h2>Record selection</h2>
+</a>
+Record selection is written with an infix `<samp>.</samp>' between an
+expression and a label.
+<br><br><code>
+<i>expr</i> ::= <i>expr</i> . <i>labelid</i>
+</code><br><br>
+Example: <samp>r.x</samp>
+
+<a name="Sig">
+<h2>Record types (products)</h2>
+</a>
+The notation for a record type is similar to that of the record
+formation.  The only difference is that for abstract components the
+expression part is left out and there are no modifiers.
+
+<br><br><code>
+<i>expr</i> ::= sig { <i>varid</i> :: <i>type</i> [ = <i>expr</i> ] ; ... }
+</code><br><br>
+<p>
+Note that the word <samp>sig</samp> can be omitted when the layout rule is not used.
+<p>
+Example (the types of the records above):<br>
+<samp>sig { x :: Int; y :: Int; }</samp><br>
+<samp>sig { idInt :: Int->Int; two :: Int; }</samp><br>
+<samp>sig { x2 :: Int; }</samp><br>
+<samp>sig { c :: Int = 2; inc :: Int->Int; }</samp>
+
+<p>
+A peculiarity of the record type is that does not only contain type of each
+component, but sometimes also its value!
+This is mostly used to make the constructors of a data type known from
+just the signature of a module (=record).
+Having the value of a component in the type complicates testing types
+for equality, but not in any essential way since arbitrary expression
+need to be compared anyway with dependent types.
+
+<a name="Let">
+<h2><samp>let</samp> expressions</h2>
+</a>
+Cayenne provides Haskell style <samp>let</samp> expressions to make
+local bindings.
+<br><br><code>
+<i>expr</i> ::= let <i>defn</i>; ... in <i>expr</i>
+</code><br><br>
+
+The expression<br>
+<samp>let d1; d2; ... in e</samp><br>
+is (semantically) equivalent to<br>
+<samp>struct { d1; d2; ...; r::t = e; }.r</samp><br>
+where <samp>r</samp> is a fresh identifier and <samp>t</samp> is the
+type of <samp>e</samp>.
+
+<a name="Open">
+<h2><samp>open</samp> expressions</h2>
+</a>
+The <samp>open</samp> expression provides a convenient way to get
+access to many components of a record.
+<br><br><code>
+<i>expr</i> ::= open <i>expr</i> use <i>varid</i> :: <i>type</i> [ =
+<i>varid</i> ], ... in <i>expr</i>
+</code><br><br>
+
+The expression<br>
+<samp>open e use i1::t1=i1', i2::t2=i2', ... in e'</samp><br>
+is (semantically) equivalent to<br>
+<samp>let i1::t1 = e.i1'; i2::t2 = e.i2'; ... in e'</samp>
+<p>
+
+If the second <i>varid</i> is left out it is assumed to be the same as
+the first.  The types can be omitted.  So you normally write just<br>
+<samp>open e use i1, i2, ... in e'</samp>
+
+<h4>Syntactic sugar</h4>
+The types in the <samp>use</samp> part of the expression can always be
+omitted.
+
+<a name="Do">
+<h2><samp>do</samp> expressions</h2>
+</a>
+To simplify the use of monads Cayenne has a <samp>do</samp> notation
+similar to Haskell's.  The difference is that the record representing
+the monad have to be given explicitely.
+<br><br><code>
+<i>expr</i> ::= do <i>expr</i> { <i>bind</i> ; ... }<br>
+<i>bind</i> ::= <i>varid</i> :: <i>type</i> &lt;- <i>expr</i>  |  <i>expr</i>
+</code><br><br>
+The <samp>do</samp> notation expands like this
+<br><br><code>
+do <i>expr</i> { <i>binds</i> } <br>
+---> <br>
+open <i>expr</i> use (>>=), (>>), return in <b>T</b> { <i>binds</i> }
+</code><br><br>
+And the translation is
+<br><br><code>
+<b>T</b> { <i>expr</i> } ---> <i>expr</i> <br>
+<b>T</b> { <i>expr</i> ; <i>binds</i> } ---> <i>expr</i> >> <b>T</b> { <i>binds</i> } <br>
+<b>T</b> { <i>arg</i> &lt;- <i>expr</i> ; <i>binds</i> } ---> <i>expr</i>
+>>= \ <i>arg</i> -> <b>T</b> { <i>binds</i> } <br>
+</code><br>
+
+<p>
+Example:
+<pre>do System$IO.Monad {
+    s :: String &lt;- readFile "foo";
+    writeFile "bar" s;
+}</pre>
+
+<h2>Example</h2>
+A record (module) for booleans.
+<pre>struct {
+  Bool :: # = data False | True;
+  True :: Bool = True@Bool;
+  False :: Bool = False@Bool;
+  not :: Bool -> Bool = \ (x::Bool) ->
+    case x of {
+    (False) -> True;
+    (True) -> False;
+    };
+}
+</pre>
+<p>
+Natural numbers:
+<pre>struct {
+  Nat :: # = data Zero | Succ Nat;
+  add :: Nat -> Nat -> Nat = \ (x::Nat) -> \ (y::Nat) ->
+    case x of {
+    (Zero) -> y;
+    (Succ n) -> Succ (add n y);
+  };
+}
+</pre>
+
+<a name="Eq">
+<h2>Equality proofs</h2>
+</a>
+Cayenne has syntactic sugar to make equality proofs easier
+and more readable.
+<br><br><code>
+<i>expr</i> ::= [ <i>expr</i> ]<br>
+<i>expr</i> ::= <i>expr</i> { <i>eqstep</i> ... }<br>
+<i>eqstep</i> ::= ={ DEF }= <i>expr</i> 
+<i>eqstep</i> ::= ={ <i>expr</i> }= <i>expr</i> 
+</code><br><br>
+
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Wed Mar 31 22:06:42 CEST 1999
+<!-- hhmts end -->
+</body> </html>

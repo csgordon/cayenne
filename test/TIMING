@@ -1,0 +1,5 @@
+        6.03 real         2.81 user         0.63 sys
+       64.74 real        30.25 user         1.78 sys
+cayenne: internal error: main thread has been GC'd
+    Please report this as a bug to glasgow-haskell-bugs@haskell.org,
+    or http://www.sourceforge.net/projects/ghc/

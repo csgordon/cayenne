@@ -1,0 +1,2 @@
+cayenne: Compilation errors:
+"err23a.cy", line 2, column 0, Definition must have a (complete) type signature: x

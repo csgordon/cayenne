@@ -1,0 +1,543 @@
+%\batchmode
+\nonstopmode
+
+%%% \documentclass{acmconf}     %% ICFP
+\documentclass{llncs}[12pt]             %% Portugal
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{proof}
+\pagestyle{empty}
+\thispagestyle{empty}
+%\renewcommand{\thepage}{}
+
+\newcommand\bs{\char '134}
+%\newcommand\notyet[1]{#1}
+\newcommand\notyet[1]{}
+\newcommand\com[1]{}
+\newcommand\nocom[1]{#1}
+\newcommand\exer{$\bullet$}
+
+%\leftmargin -2cm
+%\leftmargini 0cm
+%\leftmarginv 0cm
+%\leftmarginvi 0cm
+%\textwidth 16cm
+%\topmargin -1.0cm
+%\textheight 24.5cm
+%\setlength\leftmargin {-2cm}
+
+\newcommand{\nt}[1]{{\it #1}}
+\newcommand{\te}[1]{{\tt #1}}
+\newcommand{\spp}{\mbox{~~}}
+
+\newcommand{\ruleh}[3]{\infer [$\sf \scriptsize #1$] {#3} {#2}}
+\newcommand{\seph}{ & }
+\newcommand{\judge}[2]{#1 \vdash #2}
+\newcommand{\judget}[2]{#1 & \vdash & #2}
+\newcommand{\hastype}[2]{#1 \in #2}
+%\newcommand{\rsep}{\vspace*{5mm}}
+\newcommand{\rsep}{\medskip\medskip}
+\newcommand{\dc}{$\te{::}$}
+\newcommand{\dt}{$\te{.}$}
+\newcommand{\sm}{$\te{;}$}
+\newcommand{\teq}{$\te{=}$}
+\newcommand{\fun}{$\te{->}$}
+\newcommand{\lam}{$\bs$}
+\newcommand{\eq}[2]{#1 \approx #2}
+\newcommand{\hash}[1]{\;$\te{\#}$_{#1}}
+\newcommand{\keyw}[1]{$\te{#1}$\;}
+
+\newcommand{\subst}[3]{#1[#2 \mapsto #3]}
+
+\def\mapstou{\mapstochar\rightharpoonup}
+\newcommand{\eval}[2]{#1 & $\longmapsto$ & #2 \\}
+\newcommand{\evalu}[2]{#1 & $\mapstou$ & #2 \\}
+\newcommand{\ieval}[2]{$ #1 \longmapsto #2 $}
+\newcommand{\ievalu}[2]{$ #1 \mapstou #2 $}
+\newcommand{\imeval}[2]{$ #1 \longmapsto^* #2 $}
+\newcommand{\imevalu}[2]{$ #1 \mapstou^* #2 $}
+
+\newcommand{\begindescrlist}[1]{
+\begin{list}{\arabic{enumi}}{
+                \settowidth{\labelwidth}{#1}
+                \setlength{\leftmargin}{\labelwidth} % {#1}
+                \addtolength{\leftmargin}{\labelsep}
+                \setlength{\parsep}{0ex}
+                \setlength{\itemsep}{0ex}
+                \usecounter{enumi}
+        }
+}
+\newcommand{\litem}[1]{\item[#1\hfill]}
+
+\author{
+Lennart Augustsson \\
+}
+\institute{ }
+\date{}
+\title{
+Using Cayenne
+}
+
+
+\begin{document}
+\maketitle
+
+\section{Compiling and running Cayenne programs}
+
+Cayenne has a traditional batch compiler, and --- unfortunately ---
+no interactive system yet.  Program development follows the old
+edit-compile-link-run tradition.
+
+The Cayenne compiler is still very experimental, so expect bugs and
+bad error messages.
+
+
+\subsection{Compiling a file}
+A file with the suffix \te{.cy} can contain one or more Cayenne modules.
+The file can be compiled with the command
+\begin{verbatim}
+   cayenne file.cy
+\end{verbatim}
+This will compile the modules and place the generated interface 
+(which is a readable text file) and
+object files in the destination directory.  The destination is
+determined by the module name(s) in the file.  A module named
+\te{foo\$bar} will have its interface file placed in
+\te{./foo/bar.ci}.
+The top destination can be set by the \te{-d} flag.
+
+\subsection{Linking}
+To produce an executable program a module with the main function has
+to be named.  The link command is
+\begin{verbatim}
+   cayenne module$name
+\end{verbatim}
+The named module should be of type 
+\te{System\$IO.IO~System\$Unit.Unit}.
+
+Note that the \te{\$} needs to be quoted in most shells.
+
+The Cayenne compiler will automatically locate the needed modules
+and link them together.
+
+\subsection{Compiler flags}
+There are a number of flags to direct the Cayenne compiler to
+the right location for object and interface files.
+
+\begindescrlist{xxxxxxxxx}
+\litem{\te{-help}}                 generate help message
+\litem{\te{-i dir}}                directory for Cayenne system files
+\litem{\te{-d dir}}                destination for generated files
+\litem{\te{-o file}}               name of executable
+\litem{\te{-p path}}               search path for interface and object files
+\litem{\te{-v}}                    same as -fverbose
+\end{list}
+
+\subsubsection{Less useful flags}
+These flags are only useful if you want to examine the internal
+machinery of the Cayenne compiler.
+\begindescrlist{xxxxxxxxx}
+\litem{\te{-eval}}                 evaluate and print result
+\litem{\te{-fverbose}}             be talkative
+\litem{\te{-lml}}                  generate LML
+\litem{\te{-lmlComp}}              compile LML
+\litem{\te{-m}}                    keep LML
+\litem{\te{-tcheck}}               type check program
+\end{list}
+
+\subsection{Example}
+With the file \te{hello.cy} containing
+\begin{verbatim}
+module foo$hello =
+#include Prelude
+putStr ("Hello, world\n")
+\end{verbatim}
+Compile with
+\begin{verbatim}
+  cayenne hello.cy
+\end{verbatim}
+and link with
+\begin{verbatim}
+  cayenne -o hello foo$hello
+\end{verbatim}
+and finally run with
+\begin{verbatim}
+  ./hello
+\end{verbatim}
+
+\section{System modules}
+Cayenne comes with a number of predefined modules.  These modules
+have no special status, except that some syntactic constructs (like numerals
+and strings) involve a type that is defined in one of these modules.
+
+You can find some module signature in appendix \ref{app:sysmod}.
+For the full list of system modules and their interfaces, please consult the
+online documentation.
+
+\subsection{I/O}
+Cayenne supports monadic I/O just like Haskell, but the repertoire of
+available operations is smaller.
+
+The Cayenne ``\te{do}'' notation is also a little different from Haskell's.
+The monad to use must be given explicitely after the \te{do} keyword.
+The types of the variables bound with \te{do} must also be given
+explicitely.
+Example:
+\begin{verbatim}
+module example$io =
+#include Prelude
+    do Monad_IO
+        (args :: List String) <- getArgs
+        putStr "arg 1 is '"
+        putStr (head args)
+        putStr "'\n"
+\end{verbatim}
+\subsection{\te{\#include}}
+Many of the system modules can be brought into scope by simply
+putting
+\begin{verbatim}
+#include Prelude
+\end{verbatim}
+at the beginning of a module.
+This expands to a number of \te{open} expressions.  The exact
+expansion can be found in appendix \ref{app:inc}.
+
+\section{Exercises}
+Each subtask within an exercise is marked with a bullet, \exer.
+
+\subsection{Getting started}
+\exer Make sure you know the basics of Cayenne by writing a program
+that prints the 20th Fibonacci number.  \exer Also try to use the list monad to
+generate a list of Fibonacci numbers to print.
+
+\subsection{Parametric modules}
+\exer Define an abstract data type (a \te{struct}) for sets.  Assume that
+the elements of the set only admits equality.
+
+There are (at least) two ways of defining such an abstract data type.
+The way you would do it in Haskell would get a signature like this
+in Cayenne:
+\begin{verbatim}
+    sig
+        Set :: (a :: #) -> #
+        union :: (a :: #) |-> (a -> a -> Bool) -> Set a -> Set a -> Set a
+        ...
+\end{verbatim}
+Each operation on the set takes the equality operation as an argument.
+(In Haskell the class system will take care of passing this argument
+around.)  In Cayenne you can also define it in a different way, where the
+type and equality parameters are for the whole data type instead
+of for each operation.  Then we would get:
+\begin{verbatim}
+    (a :: #) -> (a -> a -> Bool) -> 
+    sig
+        Set :: #
+        union :: Set -> Set -> Set
+        ...
+\end{verbatim}
+
+\exer Why can't this be done in Haskell?  (It can be done in SML.)
+What are the advantages and disadvantages of these approaches?
+
+\exer Whichever version you chose to implement, make sure you do the other one
+as well.  \exer Use both of them for some examples of your own choice.
+
+\exer Write a function (which would be a functor in SML) that takes 
+an abstract data type which is a set and returns an abstract
+data type which is a graph.  For this exercise use the mathematical
+definition of a graph:  A graph is a set of nodes and a set of edges,
+where an edge is a pair of nodes.
+
+\subsection{A simple dependent function type}
+\exer Write a function \te{neg} that takes two arguments.  The first
+argument should be of type \te{BorI}:
+\begin{verbatim}
+  data BorI = B | I
+\end{verbatim}
+If the first argument is \te{B} the second argument should be of
+type \te{Bool} and the function should perform logical negation.
+If the first argument is \te{I} the second argument should be of
+type \te{Int} and the function should perform arithmetic negation.
+
+\exer Write a program that tests the \te{neg} function.
+
+\subsection{A useful(?) function with a dependent type}
+We would like a function that behaves as follows (using Haskell notation):
+\begin{verbatim}
+  apply f [] = f
+  apply f [x1] = f x1
+  apply f [x1,x2] = f x1 x2
+  apply f [x1,x2,x3] = f x1 x2 x3
+  ...
+\end{verbatim}
+
+\exer Figure out what type this function has and then implement it
+in Cayenne.  Hint: it's easier if you swap the arguments to \te{apply}.
+
+\subsection{Dependent records}
+In languages like Pascal, tree-like data types are often represented
+by a record with variants.  The record has a tag and depending on
+the value of the tag the record contains different things.
+In functional languages this is solved in a different way by
+using data types where the union is always at the top level.
+The purpose of this excercise is to show how the Pascal way
+of doing things can be mimicked in Cayenne.
+
+\com{
+Define a type \te{BinTree} of binary trees of that have
+\te{Int}s in the leaves and no information in the interior nodes.
+A node in the tree should be represented by a record with two fields.
+The first field is a tag that describes what kind of node it is.
+The possible values of this field should be \te{Leaf}, \te{One}, and \te{Two}.
+The second field contains the data.  Its type will depend on the tag.
+It will contain an \te{Int}, one, or two branches.
+
+Define a function that sums all the leaves of such a tree.
+}
+
+(Excuse the contrived example.)
+\exer Define a record type \te{Vehicle} which has a field \te{brand} which
+is a \te{String}, field \te{sort} of type 
+``\te{data Bicycle | Car | Train}'', and a field \te{info}.  The \te{info}
+field should have type \te{Bool} if it is a bicycle (to indicate if it is
+a tandem), type \te{Int} if it is a car (the weight), and type \te{String}
+(name of the train) if it is a train.
+
+\exer Define lists using this technique.  A list should be a record with a
+field that indicates if the list is empty or not.  There should also
+be a head and a tail field.  If the list is empty these field should
+be of type \te{Unit} otherwise of the appropriate type.  \exer Also define the
+length function on these lists.
+
+\subsection{Generic programming}
+Consider the following data type
+\begin{verbatim}
+  data Type = 
+    TProd Type Type | TSum Type Type | TList Type | TInt | TBool
+\end{verbatim}
+This data type can be used to encode the structure of (some) Cayenne
+types.
+
+\exer Write a function ``\te{decode~::~Type~->~\#}'' that takes a value of
+this type and returns the corresponding type.
+
+\exer Write a function \te{sum} that takes a value of type \te{Type} and
+the a value of the of the type encoded by the first argument.
+It should return the sum of all \te{Int} components of the second
+argument.
+
+\exer Try extending \te{Type} so it can be used to encode data types with
+one argument (possibly recursive).
+
+A little module excerise: \exer Try putting the definition of \te{Type}
+and \te{decode} in one module and \te{sum} in another.  What
+do you need to export from the first one to make it work?  Why?
+
+\subsection{Specifications and proofs}
+A Cayenne function that inserts an element into a sorted list
+can be defined like this:
+\begin{verbatim}
+insert :: (a :: #) |-> (a -> a -> Bool) -> a -> List a -> List a
+insert (<=) x (Nil) = x : Nil
+insert (<=) x (x' : xs) = if (x <= x')
+                          (x : x' : xs)
+                          (x' : insert (<=) x xs)
+\end{verbatim}
+\exer What property (properties) do you want such an insert function to
+have?  \exer Formulate that property in predicate calculus.  \exer Formulate
+that property in Cayenne (as a type).  \exer Within Cayenne, prove that
+\te{insert} has that property.  (The last part is rather tricky
+and tedious if you have no previous experience of this kind of
+proof system.)
+%%\vspace{2cm}
+
+%%\pagebreak
+\appendix
+\section{Some System modules}
+\label{app:sysmod}
+
+All the signatures below should be read as if in the context
+\begin{verbatim}
+let String = System$String.String
+    Char = System$Char.Char
+    Int = System$Int.Int
+    Bool = System$Bool.Bool
+    List = System$List.List
+    Unit = System$Unit.Unit
+    Pair = System$Tuples.Pair
+in
+\end{verbatim}
+
+\subsection{Bool}
+\begin{verbatim}
+System$Bool ::
+sig {
+  data Bool = False | True;
+  if :: (a :: #) |-> Bool -> a -> a -> a;
+  (&&) :: Bool -> Bool -> Bool;
+  (||) :: Bool -> Bool -> Bool;
+  not :: Bool -> Bool;
+  show :: Bool -> String;
+};
+\end{verbatim}
+
+\subsection{Char}
+\begin{verbatim}
+System$Char ::
+sig {
+  type Char = System$CharType.Char;
+  ord :: Char -> Int;
+  chr :: Int -> Char;
+  (==) :: Char -> Char -> Bool;
+  (/=) :: Char -> Char -> Bool;
+  (<=) :: Char -> Char -> Bool;
+  (>=) :: Char -> Char -> Bool;
+  (<) :: Char -> Char -> Bool;
+  (>) :: Char -> Char -> Bool;
+  show :: Char -> String;
+};
+\end{verbatim}
+
+\subsection{Error}
+\begin{verbatim}
+System$Error ::
+sig {
+  error :: (a :: #) |-> String -> a;
+  undefined :: (a :: #) |-> a;
+  type Undefined;
+  UndefinedT :: #1;
+};
+\end{verbatim}
+
+\subsection{HO}
+\begin{verbatim}
+System$HO ::
+sig {
+  const :: (a :: #) |-> (b :: #) |-> a -> b -> a;
+  id :: (a :: #) |-> a -> a;
+  (·) ::
+    (a :: #) |-> (b :: #) |-> (c :: #) |-> 
+    (b -> c) -> (a -> b) -> a -> c;
+  flip ::
+    (a :: #) |-> (b :: #) |-> (c :: #) |-> 
+    (a -> b -> c) -> b -> a -> c;
+  curry ::
+    (a :: #) |-> (b :: #) |-> (c :: #) |-> 
+    (Pair a b -> c) -> a -> b -> c;
+  uncurry ::
+    (a :: #) |-> (b :: #) |-> (c :: #) |-> 
+    (a -> b -> c) -> Pair a b -> c;
+};
+\end{verbatim}
+
+\subsection{Int}
+\begin{verbatim}
+System$Int ::
+sig {
+  type Int;
+  (+) :: Int -> Int -> Int;
+  (-) :: Int -> Int -> Int;
+  (*) :: Int -> Int -> Int;
+  quot :: Int -> Int -> Int;
+  rem :: Int -> Int -> Int;
+  negate :: Int -> Int;
+  odd :: Int -> Bool;
+  even :: Int -> Bool;
+  (==) :: Int -> Int -> Bool;
+  (/=) :: Int -> Int -> Bool;
+  (<=) :: Int -> Int -> Bool;
+  (>=) :: Int -> Int -> Bool;
+  (<) :: Int -> Int -> Bool;
+  (>) :: Int -> Int -> Bool;
+  show :: Int -> String;
+};
+\end{verbatim}
+
+\subsection{List}
+\begin{verbatim}
+System$List ::
+sig {
+  data List a = Nil | (:) a (List a);
+  null :: (a :: #) |-> List a -> Bool;
+  length :: (a :: #) |-> List a -> Int;
+  map :: (a :: #) |-> (b :: #) |-> (a -> b) -> List a -> List b;
+  filter :: (a :: #) |-> (a -> Bool) -> List a -> List a;
+  foldr :: (a :: #) |-> (b :: #) |-> (a -> b -> b) -> b -> List a -> b;
+  concat :: (a :: #) |-> List (List a) -> List a;
+  head :: (a :: #) |-> List a -> a;
+  tail :: (a :: #) |-> List a -> List a;
+  show :: (a :: #) |-> (a -> String) -> List a -> String;
+  (++) :: (a :: #) |-> List a -> List a -> List a;
+  take :: (a :: #) |-> Int -> List a -> List a;
+  drop :: (a :: #) |-> Int -> List a -> List a;
+  zipWith ::
+    (a :: #) |-> (b :: #) |-> (c :: #) |-> 
+    (a -> b -> c) -> List a -> List b -> List c;
+  Monad_List :: System$Monad List;
+};
+\end{verbatim}
+
+\subsection{Maybe}
+\begin{verbatim}
+System$Maybe ::
+sig {
+  data Maybe a = Nothing | Just a;
+  maybe :: (a :: #) |-> (b :: #) |-> b -> (a -> b) -> Maybe a -> b;
+  fromJust :: (a :: #) |-> Maybe a -> a;
+  Monad_Maybe :: System$Monad Maybe;
+  show :: (a :: #) |-> (a -> String) -> Maybe a -> String;
+};
+\end{verbatim}
+
+\subsection{Monad}
+\begin{verbatim}
+type System$Monad (m :: # -> #) = 
+sig {
+  (>>=) :: (a :: #) |-> (b :: #) |-> m a -> (a -> m b) -> m b;
+  (>>) :: (a :: #) |-> (b :: #) |-> m a -> m b -> m b;
+  return :: (a :: #) |-> a -> m a;
+};
+\end{verbatim}
+
+\subsection{Tuples}
+\begin{verbatim}
+System$Tuples ::
+sig {
+  data Pair a b = (,) a b;
+  fst :: (a :: #) |-> (b :: #) |-> Pair a b -> a;
+  snd :: (a :: #) |-> (b :: #) |-> Pair a b -> b;
+  show :: (a :: #) |-> (b :: #) |->
+          (a -> String) -> (b -> String) -> Pair a b -> String;
+};
+\end{verbatim}
+
+\subsection{Unit}
+\begin{verbatim}
+System$Unit ::
+sig {
+  data Unit = unit;
+  show :: Unit -> String;
+};
+\end{verbatim}
+
+\section{\te{\#include Prelude}}
+\label{app:inc}
+This is text inserted
+\begin{verbatim}
+open System$Unit   use * in
+open System$String use * in
+open System$List   use * in
+open System$Bool   use * in
+open System$Char   use * in
+open System$Error  use * in
+open System$IO     use * in
+open System$Tuples use * in
+open System$Either use * in
+open System$HO     use * in
+open System$Int    use * in
+\end{verbatim}
+
+\end{document}
+

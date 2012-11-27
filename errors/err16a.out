@@ -1,0 +1,3 @@
+cayenne: Compilation errors:
+"err16a.cy", line 2, column 4, Constructor type is not a sum: sig {  }
+

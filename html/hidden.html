@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Hidden arguments</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Hidden arguments</h1>
+Many functions have type arguments that seem to serve no purpose, except
+to irritate the user. E.g.
+<pre>
+if :: (a :: #) -> System$Bool.Bool -> a -> a -> a
+</pre>
+For each use of <samp>if</samp> the type of the two branches must be
+given.
+<p>
+To lessen this problem Cayenne uses a mechanism for leaving out certain
+arguments at the application site.  The arguments still have to be
+given when the function is defined though.  Hidden agruments introduce
+a new version of the function type, function abstraction, and function
+application.
+<p>
+The function arrow in both the type and abstraction notation is
+written <samp>|-></samp> for hidden arguments.  Application of a
+hidden argument uses infix <samp>|</samp>.  But normally a hidden
+argument does not need to be given at all.
+<p>
+In function definitions the hidden arguments should not be present on
+the left hand side unless preceded by a <samp>|</samp>, i.e., the left
+hand side looks like an application.
+<p>
+Example:
+<pre>
+if :: (a :: #) |-> Bool -> a -> a -> a;
+if (True)  x y = x;
+if (False) x y = y;
+</pre>
+This if function can the be used as <samp>if True 1 2</samp>, or more
+explicitely <samp>if |Int True 1 2</samp>.
+<p>
+Hidden arguments is a syntactic device without any deep semantic properties.
+The function type for hidden arguments should not be viewed as a new
+type.  It is completely compatible with the normal function type.
+It only servers as a marker to aid the insertion of the hidden argumets.
+
+<p>
+The hidden argument feature is still under development.
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 31 01:40:00 CEST 1998
+<!-- hhmts end -->
+</body> </html>

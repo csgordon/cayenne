@@ -1,0 +1,22 @@
+To build and install cayenne do
+
+        gunzip < cayenne-YYYY-MM-DD.tgz | tar xf -
+        cd Cayenne
+        make
+        make install
+
+If you don't want to install in /usr/local/bin and
+/usr/local/lib/cayenne you can do
+
+	make BINDIR=foo CAYENNEDIR=bar install
+
+In this case you also need to set the environment variable
+CAYENNEDIR=bar when running cayenne.
+
+
+There is some documentation in the html directory.
+
+
+There's plenty of bugs, so tread carefully. :)
+
+        -- Lennart

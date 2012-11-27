@@ -1,0 +1,403 @@
+%\batchmode
+\nonstopmode
+
+%%% \documentclass{acmconf}     %% ICFP
+\documentclass{llncs}[12pt]             %% Portugal
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{proof}
+%\pagestyle{empty}
+%\thispagestyle{empty}
+
+\newcommand\bs{\char '134}
+%\newcommand\notyet[1]{#1}
+\newcommand\notyet[1]{}
+\newcommand\com[1]{}
+\newcommand\nocom[1]{#1}
+\newcommand\tmp[1]{{\sf #1}}
+
+%\leftmargin -2cm
+%\leftmargini 0cm
+%\leftmarginv 0cm
+%\leftmarginvi 0cm
+%\textwidth 16cm
+%\topmargin -1.0cm
+%\textheight 24.5cm
+%\setlength\leftmargin {-2cm}
+
+\newcommand{\nt}[1]{{\it #1}}
+\newcommand{\te}[1]{{\tt #1}}
+\newcommand{\spp}{\mbox{~~}}
+
+\newcommand{\ruleh}[3]{\infer [$\sf \scriptsize #1$] {#3} {#2}}
+\newcommand{\seph}{ & }
+\newcommand{\judge}[2]{#1 \vdash #2}
+\newcommand{\judget}[2]{#1 & \vdash & #2}
+\newcommand{\hastype}[2]{#1 \in #2}
+%\newcommand{\rsep}{\vspace*{5mm}}
+\newcommand{\rsep}{\medskip\medskip}
+\newcommand{\dc}{$\te{::}$}
+\newcommand{\dt}{$\te{.}$}
+\newcommand{\sm}{$\te{;}$}
+\newcommand{\teq}{$\te{=}$}
+\newcommand{\fun}{\rightarrow}
+\newcommand{\lam}{\lambda}
+\newcommand{\eq}[2]{#1 \approx #2}
+\newcommand{\hash}[1]{\;$\te{\#}$_{#1}}
+\newcommand{\keyw}[1]{$\te{#1}$\;}
+
+\newcommand{\gram}[2]{\mbox{} \par \noindent {\it #1} ::= #2}
+\newcommand{\nterm}[1]{{\it #1}}
+\newcommand{\term}[1]{``{\tt #1}''}
+\newcommand{\many}[1]{\{ #1 \}}
+\newcommand{\opt}[1]{[ #1 ]}
+\newcommand{\alt}{~|~}
+
+\newcommand{\subst}[3]{#1[#2 \mapsto #3]}
+
+\def\mapstou{\mapstochar\rightharpoonup}
+\newcommand{\eval}[2]{#1 & $\longmapsto$ & #2 \\}
+\newcommand{\evalu}[2]{#1 & $\mapstou$ & #2 \\}
+\newcommand{\ieval}[2]{$ #1 \longmapsto #2 $}
+\newcommand{\ievalu}[2]{$ #1 \mapstou #2 $}
+\newcommand{\imeval}[2]{$ #1 \longmapsto^* #2 $}
+\newcommand{\imevalu}[2]{$ #1 \mapstou^* #2 $}
+
+
+\author{
+Lennart Augustsson
+}
+%%\affiliation{
+\institute{
+{ Department of Computing Sciences}\\
+{ Chalmers University of Technology}\\
+{ S-412 96 G{\"o}teborg, Sweden}\\
+Email: {\tt augustss@cs.chalmers.se}\\
+WWW: {\tt http://www.cs.chalmers.se/\~{}augustss}\\
+}
+\date{}
+\title{
+Equality proofs in Cayenne
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We introduce a simple syntactical extension to Cayenne to make equality proofs readable.
+\end{abstract}
+
+%% \copyrightspace %% ACM
+
+\section{Introduction}
+Equality proofs are important for functional programs, since they are
+encouraged by equational reasoning.
+Unfortunately, type theory style equational proofs are tedious and look very ugly.
+
+Let us illustrate this with an example.  We wish to prove that list
+append is associative.  The function has the following definition:
+\begin{verbatim}
+Nil      ++ ys = ys
+(x : xs) ++ ys = x : (xs ++ ys)
+\end{verbatim}
+Now we want to establish that \te{(xs++ys)++zs = xs++(ys++zs)}.  With normal
+notation we do this with an inductive proof\footnote{Assuming finite lists, and no $\perp$.} as follows.
+
+\begin{tabular}{lcl}
+Base case: \\
+\te{~~(Nil++ys)++zs}	& \te{~=~} & \nt{~~~~~by first clause of ++} \\
+\te{=~ys++zs}		& \te{~=~} & \nt{~~~~~by first clause of ++, reversed} \\
+\te{=~Nil++(ys++zs)}	\\
+\\
+Inductive step: \\
+\te{~~((x:xs)++ys)++zs}	& \te{~=~} & \nt{~~~~~by second clause of ++} \\
+\te{=~(x:(xs++ys))++zs}	& \te{~=~} & \nt{~~~~~by second clause of ++} \\
+\te{=~x:((xs++ys)++zs)}	& \te{~=~} & \nt{~~~~~by induction hypothesis} \\
+\te{=~x:(xs++(ys++zs))}	& \te{~=~} & \nt{~~~~~by second clause of ++, reversed} \\
+\te{=~(x:xs)++(ys++zs)} \\
+\end{tabular}
+
+Now compare this to the same proof in type theory style.  We assume that we have an \te{Id} type for
+equality;\footnote{Which seems to be out of fashion these days.} see appendix \ref{app:Id}.
+This proof uses
+Cayenne/Agda syntax,\cite{augustsson:cayenne}, and assumes there are no hidden arguments.
+
+\begin{verbatim}
+(++) :: (a :: #) -> List a -> List a -> List a
+(++) a (Nil) ys = ys
+(++) a (x : xs) ys = (:) a x ((++) a xs ys)
+
+appendAssocP :: (a :: #) -> (xs, ys, zs :: List a) -> 
+        Id (List a) ((++) a ((++) a xs ys) zs) ((++) a xs ((++) a ys zs))
+appendAssocP a (Nil) ys zs = 
+        refl (List a) ((++) a ys zs)
+appendAssocP a (x:xs) ys zs =
+        subst (List a) (List a) 
+              ((++) a ((++) a xs ys) zs)
+              ((++) a xs ((++) a ys zs))
+              (\ (ws :: List a) -> x : ws)
+              (appendAssocP a xs ys zs)
+\end{verbatim}
+
+This is a total mess, and penetrating its meaning is only recommended for
+masochists.  One reason for the mess is all the extra type arguments.  As a first step
+towards readability
+we allow hidden arguments (as Cayenne does), and use the infix symbol \te{===}
+for the Id type.
+
+\begin{verbatim}
+(++) :: (a :: #) |-> List a -> List a -> List a
+(Nil)    ++ ys = ys
+(x : xs) ++ ys = x : (xs ++ ys)
+
+appendAssocP :: (a :: #) |-> (xs, ys, zs :: List a) -> 
+        (xs++ys)++zs === xs++(ys++zs)
+appendAssocP (Nil) ys zs = 
+        refl (ys++zs)
+appendAssocP (x:xs) ys zs =
+        subst (\ (ws :: List a) -> x : ws) (appendAssocP xs ys zs)
+\end{verbatim}
+
+The proof we have now is more readable, but it is quite tedious to construct
+and read.  This is not because of any technical problems.  This is, in fact,
+exactly the same proof as presented informally above, but we would be hard pressed
+see that.
+
+In contrast, the new notational device that we use in Cayenne to make the proof readable will
+yield the following proof.
+
+\begin{verbatim}
+appendAssocP :: (a :: #) |-> (xs, ys, zs :: List a) -> 
+        (xs++ys)++zs === xs++(ys++zs)
+appendAssocP (Nil) ys zs =
+        (Nil ++ ys) ++ zs               ={ DEF }=
+        ys ++ zs                        ={ DEF }=
+        Nil ++ (ys ++ zs)
+appendAssocP (x:xs) ys zs =
+        ((x : xs) ++ ys) ++ zs          ={ DEF }=
+        (x : (xs ++ ys)) ++ zs          ={ DEF }=
+        x : ((xs ++ ys) ++ zs)          ={ appendAssocP xs ys zs }=
+        x : (xs ++ (ys ++ zs))          ={ DEF }=
+        (x : xs) ++ (ys ++ zs)
+\end{verbatim}
+
+The notation is now quite close to the informal proof.  The notation is very simple.
+It is a number of expressions that are equal, separated by the reason why they are equal.
+If the reason says \te{DEF} it means that they are equal because of the definitional
+equations; if it is an expression, then this expression is the proof object
+that proves that the subexpressions that differ between the two expressions are equal.
+
+\section{Equality proof notation}
+The notation is almost entirely syntactic sugar.  There is a simple translation
+from an equality proof into a normal term.
+An equality proof has the following form:
+
+\begin{tabular}{ll}
+$exp_1$ & \te{=\{} $why_1$ \te{\}=} \\
+$exp_2$ & \te{=\{} $why_2$ \te{\}=} \\
+\ldots& \\
+$exp_n$ & \te{=\{} $why_n$ \te{\}=} \\
+$exp_{n+1}$ \\
+\end{tabular}
+
+The first expression, $exp_1$, is used to prove that it is equal to itself
+using reflexivity.  Given the proof from an initial segment of an 
+equality chain, it is easy to obtain the next proof.  If the reason,
+$why_k$, is \te{DEF} it simply means that the same equality proof can be used 
+even when the next step is added since the type checker can handle
+definitional equalities.
+If the reason is a proof object, it is the proof that a subpart of $exp_k$
+is equal to a corresponding part of $exp_{k+1}$.  The rest of the two expressions
+must be identical.  Using substitutivity on this proof we can obtain a proof
+that $exp_k$ is equal to $exp_{k+1}$.  This proof is then combined with the
+proof from the preceding steps in the chain using transitivity.
+
+The two subexpressions that a given proof object concerns can be explicitly
+marked by enclosing the subexpression in \te{[]} (in the first of the two involved
+expressions).  If no subexpression is
+marked, the type checker will use the smallest subexpressions that make the rest
+of the expressions identical.
+
+It is almost always sufficent to leave out the \te{[]} marks and let the
+smallest changed be derived automatically, but sometimes this is not
+correct.  For example, the expressions ``\te{abs(abs x)}'' is equal to
+``\te{abs x}'', but this is {\em not} because we have a proof that
+``\te{abs x}'' is equal to ``\te{x}'', so the smallest subexpression that
+differs is not the right thing to choose in this case.
+
+The extension to the syntax and the translation can be formalized as follows.  
+
+The extension to the grammar:
+
+\gram{exp}{\term{[} \nterm{exp} \term{]}}
+\gram{exp}{\nterm{eqchain}}
+
+\gram{eqchain}{\nterm{exp}}
+\gram{eqchain}{\nterm{eqchain} \term{=\{} \term{DEF} \term{\}=} \nterm{exp}}
+\gram{eqchain}{\nterm{eqchain} \term{=\{} \nterm{exp} \term{\}=} \nterm{exp}}
+
+Note that this is not the concrete grammar used for parsing.  An equality
+proof must have at least one ``\te{=\{~\}=}'' to make sense.
+
+The bracketed expression that indicates what part of the term the
+equality proof operates on is taken from the expression that precedes the
+``\te{=\{~\}=}''.
+
+Example:
+\begin{verbatim}
+    f[x]  ={     h  ::   x === y   }= 
+    [f y] ={     h' :: f y === g y }= 
+     g[y] ={ symm h ::   y === x   }=
+     g x
+\end{verbatim}
+
+The translation:
+
+\newcommand{\eqt}[1]{{\cal E}\lbrack\!\lbrack\:#1\:\rbrack\!\rbrack}
+
+\[
+\begin{array}{lcl}
+\eqt{e} & = & \te{refl}\; e \\
+\eqt{c\; \te{=\{~DEF~\}=}\; e} & = & \eqt{c}\; \te{::}\; \te{(}h(c)\; \te{===}\; e \te{)} \\
+\eqt{c\; \te{=\{}\;p\;\te{\}=}\; C[e]} & = & \te{trans}\; \eqt{c}\; 
+	\te{(subst~(\bs~}x\te{~->~} C[x] \te{)}\; p \te{)} \\
+\end{array}
+\]
+\[
+\begin{array}{lcl}
+h(e) & = & e \\
+h(c\; \te{=\{~...~\}=}\; e) & = & h(c)
+\end{array}
+\]
+
+The \te{DEF} steps can, of course, be left out of an equality proof since
+they do not contribute to the proof object, but they can increase the
+clarity of a proof.
+
+\section{Possible extensions}
+\subsection{Symmetry}
+The notation handles substitutivity and transitivity, but not symmetry of
+equality.  It would be easy to extend the type checker to try a given
+$why$ expression with and without symmetry applied, and pick the one that
+succeeds, but we have not implemented this.
+
+\subsection{Proof simplification}
+The equality proof obtained by the translation described above is not
+always as simple as it could be.
+The first time that transitivity is used in a proof we know that the
+first proof will always be a proof with reflexivity, so it is not really
+necessary to use transitivity; the second proof to \te{trans} suffices
+as the whole proof.  Furthermore, sometimes the function argument used
+to \te{subst} is the identity function, so there is really no need to use
+\te{subst} at all.
+
+It is easy to add these simplifications to the translation process,
+but it does not really matter since the proof objects are not used anyway.
+
+\section{Acknowledgments}
+Thanks to Jessica for proof reading.
+
+\bibliography{/usr/local/lib/pmgrefs,interp}
+\bibliographystyle{alpha} 
+
+\appendix
+\section{The equality type}
+\label{app:Id}
+\begin{verbatim}
+(===) :: (a :: #) |-> a -> a -> #
+
+refl :: (a :: #) |-> (x :: a) |-> x === x
+
+symm :: (a :: #) |-> (x, y :: a) |->
+        x === y -> y === x
+
+trans :: (a :: #) |-> (x, y, z :: a) |-> 
+        x === y -> y === z -> x === z
+
+congr :: (a :: #) |-> (P :: a -> #) -> (x, y :: a) -> 
+        x === y -> P x -> P y
+
+subst :: (a, b :: #) |->  (x, y :: a) |-> (f :: a -> b) ->
+        x === y -> f x === f y
+\end{verbatim}
+
+\section{Complete proof of \te{rev (rev xs) = xs}}
+{
+\small
+\begin{verbatim}
+module example$RevEq =
+open System$List use * in
+open System$Id use (===), symm in
+
+struct
+
+concrete
+(++) :: (a :: #) |-> List a -> List a -> List a
+(++) (Nil) ys = ys
+(++) (x : xs) ys = x : (xs ++ ys)
+
+appendNilP :: (a :: #) |-> (xs :: List a) -> 
+        xs ++ Nil === xs
+appendNilP |a (Nil) =
+        Nil|a ++ Nil                          ={ DEF }=
+        Nil
+appendNilP |a (x : xs) =
+        (x:xs) ++ Nil                         ={ DEF }=
+        x:(xs ++ Nil)                         ={ appendNilP xs }=
+        x:xs                                  ={ DEF }=
+        Nil ++ (x:xs)
+
+appendAssocP :: (a :: #) |-> (xs, ys, zs :: List a) -> 
+        (xs++ys)++zs === xs++(ys++zs)
+appendAssocP |a (Nil) ys zs =
+        (Nil|a ++ ys) ++ zs                   ={ DEF }=
+        ys ++ zs                              ={ DEF }=
+        Nil ++ (ys ++ zs)
+appendAssocP |a (x:xs) ys zs =
+        ((x : xs) ++ ys) ++ zs                ={ DEF }=
+        (x : (xs ++ ys)) ++ zs                ={ DEF }=
+        x : ((xs ++ ys) ++ zs)                ={ appendAssocP xs ys zs }=
+        x : (xs ++ (ys ++ zs))                ={ DEF }=
+        (x : xs) ++ (ys ++ zs)
+
+-----
+
+concrete
+rev :: (a :: #) |-> List a -> List a
+rev (Nil) = Nil
+rev (x : xs) = rev xs ++ (x : Nil)
+
+revAppendP :: (a :: #) |-> (xs, ys :: List a) -> 
+        rev (xs++ys) === rev ys ++ rev xs
+revAppendP |a (Nil) ys =
+        rev (Nil|a ++ ys)                     ={ DEF }=
+        rev ys                                ={ symm (appendNilP (rev ys)) }=
+        rev ys ++ Nil                         ={ DEF }=
+        rev ys ++ rev (Nil|a)
+revAppendP |a (x:xs) ys =
+        rev ((x : xs) ++ ys)                  ={ DEF }=
+        rev (x : (xs ++ ys))                  ={ DEF }=
+        rev (xs ++ ys) ++ (x:Nil)             ={ revAppendP xs ys }=
+        (rev ys ++ rev xs) ++ (x:Nil)         ={ appendAssocP (rev ys) (rev xs) (x:Nil) }=
+        rev ys ++ (rev xs ++ (x:Nil))         ={ DEF }=
+        rev ys ++ (rev (x:xs))
+
+revRevP :: (a :: #) |-> (xs :: List a) -> 
+        rev (rev xs) === xs
+revRevP |a (Nil) =
+        rev (rev (Nil|a))                     ={ DEF }=
+        rev (Nil|a)                           ={ DEF }=
+        Nil
+revRevP |a (x:xs) =
+        rev (rev (x:xs))                      ={ DEF }=
+        rev (rev xs ++ (x:Nil))               ={ revAppendP (rev xs) (x:Nil) }=
+        rev (x:Nil) ++ rev (rev xs)           ={ revRevP xs }=
+        rev (x:Nil) ++ xs                     ={ DEF }=
+        (x:Nil) ++ xs                         ={ DEF }=
+        x:xs
+\end{verbatim}
+}
+
+\end{document}

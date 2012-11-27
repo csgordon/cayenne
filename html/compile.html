@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Compiling</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Compiling</h1>
+<h2>Compiling a file</h2>
+A file with the suffix .cy can contain one or more Cayenne modules.
+The file can be compiled by the command
+<pre>   cayenne file.cy</pre>
+This will compile the modules and place the generated interface and
+object files in the destination directory.  The destination is
+determined by the module name(s) in the file.  A module named
+<samp>foo$bar</samp> will have its interface file placed in
+./foo/bar.ci.  The top destination can be set by the <samp>-d</samp>
+flag.
+
+<h2>Linking</h2>
+To produce an executable program a module with the main functions has
+to be named.  The command is
+<pre>  cayenne module$name</pre>
+The named module should be of type <samp>System$IO.IO
+System$Unit.Unit</samp>.
+
+<p>
+Note that the $ needs to be quoted in most shells.
+<h2>Compiler flags</h2>
+<pre>
+-i dir                directory for Cayenne system files
+-d dir                destination for generated files
+-o file               name of executable
+-p path               search path for interface files
+</pre>
+
+<h4>Less useful flags</h4>
+<pre>
+-eval                 evaluate and print result
+-fverbose             be talkative
+-help                 generate help message
+-lml                  generate LML
+-lmlComp              compile LML
+-m                    keep LML
+-tcheck               type check program
+-v                    same as -fverbose
+</pre>
+
+<h2>Example</h2>
+With the file hello.cy containing
+<pre>
+module foo$hello =
+#include Prelude
+
+putStr ("Hello, world\n")
+</pre>
+<p>
+Compile with
+<pre>  cayenne hello.cy</pre>
+and link with
+<pre>  cayenne foo$hello</pre>
+and finally run with
+<pre>  ./a.out</pre>
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 31 01:40:00 CEST 1998
+<!-- hhmts end -->
+</body> </html>

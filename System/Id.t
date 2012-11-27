@@ -1,0 +1,1 @@
+import VSystemZ24Id: (#5 (*a->(*b->(*c->(*d->*d)))) ((*e->*f)->(*e->(*g->(*h->*f)))) (*i->TZ7creflZ230) (*j->(*t10->(*t11->TZ7creflZ230))) (*t12->(*t13->(*t14->(*t15->(*t16->*t15)))))) {# ARITY _ = 0 #}{# STRICTNESS _ = "T,T" ST #};

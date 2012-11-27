@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>System modules</title>
+</head>
+
+<body background="peppers.gif">
+<h1>System modules</h1>
+There are a number of system modules containing commonly used types
+and functions.  Some of these modules written entirely in Cayenne, some (like the
+Int module) are not.
+<p>
+All the signatures below should be read as if in the context
+<pre>
+let String = System$String.String
+    Char = System$Char.Char
+    Int = System$Int.Int
+    Bool = System$Bool.Bool
+    List = System$List.List
+    Unit = System$Unit.Unit
+    Pair = System$Tuples.Pair
+in
+</pre>
+

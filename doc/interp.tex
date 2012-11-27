@@ -1,0 +1,749 @@
+%\batchmode
+\nonstopmode
+
+%%% \documentclass{acmconf}     %% ICFP
+\documentclass{llncs}[12pt]             %% Portugal
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{proof}
+%\pagestyle{empty}
+%\thispagestyle{empty}
+
+\newcommand\bs{\char '134}
+%\newcommand\notyet[1]{#1}
+\newcommand\notyet[1]{}
+\newcommand\com[1]{}
+\newcommand\nocom[1]{#1}
+\newcommand\tmp[1]{{\sf #1}}
+
+%\leftmargin -2cm
+%\leftmargini 0cm
+%\leftmarginv 0cm
+%\leftmarginvi 0cm
+%\textwidth 16cm
+%\topmargin -1.0cm
+%\textheight 24.5cm
+%\setlength\leftmargin {-2cm}
+
+\newcommand{\nt}[1]{{\it #1}}
+\newcommand{\te}[1]{{\tt #1}}
+\newcommand{\spp}{\mbox{~~}}
+
+\newcommand{\ruleh}[3]{\infer [$\sf \scriptsize #1$] {#3} {#2}}
+\newcommand{\seph}{ & }
+\newcommand{\judge}[2]{#1 \vdash #2}
+\newcommand{\judget}[2]{#1 & \vdash & #2}
+\newcommand{\hastype}[2]{#1 \in #2}
+%\newcommand{\rsep}{\vspace*{5mm}}
+\newcommand{\rsep}{\medskip\medskip}
+\newcommand{\dc}{$\te{::}$}
+\newcommand{\dt}{$\te{.}$}
+\newcommand{\sm}{$\te{;}$}
+\newcommand{\teq}{$\te{=}$}
+\newcommand{\fun}{\rightarrow}
+\newcommand{\lam}{\lambda}
+\newcommand{\eq}[2]{#1 \approx #2}
+\newcommand{\hash}[1]{\;$\te{\#}$_{#1}}
+\newcommand{\keyw}[1]{$\te{#1}$\;}
+
+\newcommand{\subst}[3]{#1[#2 \mapsto #3]}
+
+\def\mapstou{\mapstochar\rightharpoonup}
+\newcommand{\eval}[2]{#1 & $\longmapsto$ & #2 \\}
+\newcommand{\evalu}[2]{#1 & $\mapstou$ & #2 \\}
+\newcommand{\ieval}[2]{$ #1 \longmapsto #2 $}
+\newcommand{\ievalu}[2]{$ #1 \mapstou #2 $}
+\newcommand{\imeval}[2]{$ #1 \longmapsto^* #2 $}
+\newcommand{\imevalu}[2]{$ #1 \mapstou^* #2 $}
+
+
+\author{
+Lennart Augustsson \\
+Magnus Carlsson \\
+}
+%%\affiliation{
+\institute{
+{ Department of Computing Sciences}\\
+{ Chalmers University of Technology}\\
+{ S-412 96 G{\"o}teborg, Sweden}\\
+Email: {\tt \{augustss,magnus\}@cs.chalmers.se}\\
+WWW: {\tt http://www.cs.chalmers.se/\~{}\{augustss,magnus\}}\\
+}
+\date{}
+\title{
+An exercise in dependent types: \\
+A well-typed interpreter
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The result type of an interpreter written in a typed language
+is normally a tagged union.
+By using depent types, we can be
+more precise about the type of values that the intepreter
+returns. There is no need for tagging these values with their
+type, something which opens the door to more efficient interpreters. 
+\end{abstract}
+
+%% \copyrightspace %% ACM
+
+\section{An annoying problem}
+
+\tmp{We are ignoring $\perp$ for now.}
+
+Writing an interpreter for a language which can produce results
+of different types requires some kind of encoding of the result,
+as in figure~\ref{fig:simple}.  The encoding is captured
+in the tagging in the data type \te{Value}.  This tagging is inefficient
+since each return value must be tagged. In addition, the tags
+must be tested and the real values extracted again when they
+are used.
+
+\begin{figure*}
+\begin{verbatim}
+data Expr = EBool Bool | EInt Int | EAdd Expr Expr
+
+data Value = VBool Bool | VInt Int | VError
+
+interp :: Expr -> Value
+interp (EBool b) = VBool b
+interp (EInt i)  = VInt i
+interp (EAdd e1 e2) =
+    case (interp e1, interp e2) of
+    (VInt i1, VInt i2) -> VInt (i1+i2)
+    _                  -> VError
+\end{verbatim}
+\caption{A very simple language and its interpreter.}
+\label{fig:simple}
+\end{figure*}
+
+The tags serve two purposes: first, they turn the result
+into a union type so that the result is a {\em single} type;
+second, they are used to make sure that the interpreted program
+is type correct.  However, if the interpreted program has already
+been type checked and it is known to be type correct so using the union
+is really unnecessary.
+
+Assuming a type correct program, the interpreter we would like to
+write is shown in figure~\ref{fig:untyped}.  This interpreter can
+be written in a dynamically typed langue like Lisp \cite{lisp}
+or Erlang \cite{armstrong:erlang}, but
+unfortunately not in strongly typed languages like Haskell \cite{haskell12} or
+SML \cite{milner:sml-standard}.
+
+\begin{figure}
+\begin{verbatim}
+interp (EBool b) = b
+interp (EInt i)  = i
+interp (EAdd e1 e2) = interp e1 + interp e2
+\end{verbatim}
+\caption{An untyped interpreter.}
+\label{fig:untyped}
+\end{figure}
+
+\section{Dependent types to the rescue}
+The problem with the untagged interpreter (figure~\ref{fig:untyped})
+is that the type of the result {\em depends} on the value of the
+argument.  To handle that, we need a more powerful type system,
+one that can handle {\em dependent types}.  We are going to continue
+this example by using Cayenne, \cite{augustsson:cayenne}, a Haskell-like
+language which has dependent types.
+
+The interpreter written in Cayenne is shown in figure~\ref{fig:depend}.
+One difference from a Haskell version is the type of \te{interp}.
+Dependent function types are written ``\te{(x~::~t)~->~s}'', where the
+variable \te{x} may occur in \te{s}.  In this way the result type
+of a function can depend on the value of the argument.  A second
+difference from Haskell is manifested in the function \te{TypeOf}.  This function
+computes a type.  The type of types is written ``\te{\#}'' in Cayenne and
+it is treated mostly like other types.
+
+\begin{figure*}
+\begin{verbatim}
+interp :: (e :: Expr) -> TypeOf e
+interp (EBool b) = b
+interp (EInt i)  = i
+-- EAdd doesn't work
+
+TypeOf :: Expr -> #
+TypeOf (EBool _) = Bool
+TypeOf (EInt _) = Int
+TypeOf (EAdd _ _) = Int
+\end{verbatim}
+\caption{A dependently typed interpreter.}
+\label{fig:depend}
+\end{figure*}
+
+This interpreter is well typed, but the \te{EAdd} case is missing.
+The reason is that the expression ``\te{interp e1 + interp e2}''
+is not well typed.  The type of \te{interp} states that it sometimes
+returns \te{Int} and sometimes \te{Bool}, but we cannot know that
+both (or any) operands will be of type \te{Int}.  Something more
+is needed; when interpreting an expression we need some tangible
+evidence that it is actually well typed, otherwise we cannot know
+that the \te{EAdd} clause cannot fail.
+
+Before we add this we will make the language more interesting by
+adding some more cases to the expression type, figure~\ref{fig:emiddle},
+and by formalizing the typing rules, table~\ref{fig:tmiddle}.
+The typing rules are exactly what you can expect for this little
+language.
+
+\begin{figure*}
+\begin{verbatim}
+data Expr = EBool Bool | EInt Int 
+          | EAdd Expr Expr | EAnd Expr Expr | ELE Expr Expr
+\end{verbatim}
+\caption{A slightly extended expression type.}
+\label{fig:emiddle}
+\end{figure*}
+
+\begin{figure*}
+\begin{tabular}{ccc}
+\ruleh{}
+    {\mbox{}}
+    {\hastype{i}{int}}
+\rsep
+&
+\ruleh{}
+    {\mbox{}}
+    {\hastype{b}{bool}}
+\rsep
+&
+\\
+\ruleh{}
+    {\hastype{e_1}{int} \seph \hastype{e_2}{int}}
+    {\hastype{e_1 + e_2}{int}}
+&
+\ruleh{}
+    {\hastype{e_1}{bool} \seph \hastype{e_2}{bool}}
+    {\hastype{e_1 \&\& e_2}{bool}}
+
+\ruleh{}
+    {\hastype{e_1}{int} \seph \hastype{e_2}{int}}
+    {\hastype{e_1 <= e_2}{bool}}
+\end{tabular}
+\caption{Typing rules for the slightly extended expression type.}
+\label{fig:tmiddle}
+\end{figure*}
+
+\section{The well typing predicate}
+We want to capture the typing rules in such a way that we can
+know when an expression is well typed.  One way to do this
+to encode the typing rules as a predicate.  A predicate is
+encoded as a function that yields a type.  The trick of the
+encoding is that the type it yields should be empty when the
+predicate is false, and non-empty when the predicate is true.
+All of this is, of course, part of the Curry-Howard isomorphism.
+
+\tmp{More about predicates}
+
+The typing rules have been encoded as predicate, \te{HasType}
+in figure~\ref{fig:mhastype},
+together with some auxillary definitions.\footnote{As can be seen
+from the example Cayenne does not place the same restrictions as Haskell
+on type and constructor names.}
+Since it is impossible to
+pattern match on types in Cayenne we need to introduce a concrete
+type, \te{Type}, to encode the possible types of an \te{Expr}.
+The types \te{Truth} and \te{Absurd} are used to encode logical
+truth and falsity respectively, but any non-empty and empty type
+would do equally well. \tmp{More}
+
+The \te{/\bs} type is simply pairs (with an unusual name).
+It is used to represent conjunction.  Pairs represent conjunction
+simply because if either of the component types of a pair is an
+empty type then the whole pair is an empty type as well.
+
+\begin{figure}
+\begin{verbatim}
+data Type = TBool | TInt
+
+data Truth = truth
+
+data Absurd =     -- the empty type, no constructors
+
+data (/\) a b = (&) a b
+
+HasType :: Expr -> Type -> #
+HasType (EBool _)    (TBool) = Truth
+HasType (EInt _)     (TInt)  = Truth
+HasType (EAdd e1 e2) (TInt)  = HasType e1 TInt  /\ HasType e2 TInt
+HasType (EAnd e1 e2) (TBool) = HasType e1 TBool /\ HasType e2 TBool
+HasType (ELE  e1 e2) (TBool) = HasType e1 TInt  /\ HasType e2 TInt
+HasType _            _       = Absurd
+\end{verbatim}
+\caption{The well typing predicate.}
+\label{fig:mhastype}
+\end{figure}
+
+Why are we using a predicate instead of a boolean function?
+The \te{HasType} function could as easily have been written to
+yield a boolean instead of a type, but as we will soon see
+it is really the type we need.  Furthermore, as we extend the
+type system there will be cases when the predicate is easy
+to write, but the boolean function could be very difficult
+(or even impossible).
+
+A complete interpreter for our little language is presented in
+figure~\ref{fig:imiddle}.  The interpreter is now more complicated.
+It takes the expression to interpret, the expected type of the
+expression, and an object in the well-typing predicate above.
+The \te{Decode} function simply takes the encoded representation
+of the type into its real type.
+
+The well-typing predicate is an empty type when the expression
+is not well typed.  This means that in, e.g., the first clause
+of \te{interp} the \te{p} argument has type \te{Truth}.
+The most interesting clause is the last one.  It is there to make
+the patterns exhaustive, without it the Cayenne compiler would
+complain that not all cases were covered in \te{interp}.  In this
+clause the type of the argument \te{p} must be \te{Absurd}.
+This can be easily checked by examining the \te{HasType} predicate;
+the cases where it is not \te{Absurd} were covered by the
+other clauses in \te{interp}.  This means that if we reach the
+last clause of \te{interp} then \te{p} must be an element of
+the empty type, but this is of course absurd.  The absurdity
+of it is handled by the case analysis of \te{p}.  The case expression
+has no arms, since the empty type has no constructors; still
+all constructors are covered (since there are none) and all the
+right hand sides of the case have the same type as we want (\te{Decode t}).
+
+We can now see the reason for having the \te{HasType} function
+be a predicate.  This way the ill-typed case ends up as
+a clause in the interpreter that has an argument in the
+empty type, and which can thus never be reached.  The fact that
+\te{p} is an element of the empty type makes it possible to
+construct an expression of the right type on the right hand side
+of the last clause.  A boolean value would have been of no use,
+and we would have had to resort to calling, e.g., the \te{error}
+function, despite the fact that the clause can never be reached.\footnote{
+A better type system might be able to determine that the last
+clause cannot be reached and can therefore be omitted, 
+see eg.\ \cite{coquand:patternmatching}.}
+
+Note how the pair type used for the operators is taken apart
+and the constituent proofs are passed along in the recursive
+calls to \te{interp}.  It is easily verified that they actually
+have the right type by comparing with the definition of \te{HasType}.
+
+\begin{figure}
+\begin{verbatim}
+interp :: (e :: Expr) -> (t :: Type) -> HasType e t -> Decode t
+interp (EBool b)    (TBool) p         = b
+interp (EInt  i)    (TInt)  p         = i
+interp (EAdd e1 e2) (TInt)  (p1 & p2) = interp e1 TInt  p1 +  interp e2 TInt p2
+interp (EAnd e1 e2) (TBool) (p1 & p2) = interp e1 TBool p1 && interp e2 TBool p2
+interp (ELE  e1 e2) (TBool) (p1 & p2) = interp e1 TInt  p1 <= interp e2 TInt p2
+interp _            _       p         = case p of { }
+
+Decode :: Type -> #
+Decode (TBool) = Bool
+Decode (TInt)  = Int
+\end{verbatim}
+\caption{An interpreter for the slightly extended expression type.}
+\label{fig:imiddle}
+\end{figure}
+
+\section{Adding variables}
+The interpreted language in the previous sections is very simple.
+We will now extend it to $\lambda$-calculus by adding variables,
+application, and $\lambda$-expressions.  The $\lambda$s will be
+explicitely typed to simplify things.
+
+The extended expression type is shown in figure~\ref{fig:expr}.
+The concrete type expressions and the decoding function are also
+extended to handle the function type.
+
+\begin{figure}
+\begin{verbatim}
+data Expr = EBool Bool | EInt Int 
+          | EAdd Expr Expr | EAnd Expr Expr | ELE Expr Expr
+          | EVar Symbol | ELam Type Symbol Expr | EAp Expr Expr
+
+type Symbol = String
+
+data Type = TBool | TInt | TArrow Type Type
+
+Decode :: Type -> #
+Decode (TBool) = Bool
+Decode (TInt)  = Int
+Decode (TArrow a b) = Decode a -> Decode b
+\end{verbatim}
+\caption{The expression type.}
+\label{fig:expr}
+\end{figure}
+
+\subsection{The type system}
+The typing rules must be extended with an environment (or
+assumptions) to handle the variables.  These rules, figure~\ref{fig:rules},
+are the standard ones.
+
+\begin{figure}
+\begin{tabular}{ccc}
+\ruleh{}
+    {\mbox{}}
+    {\judge{\Gamma}{\hastype{i}{int}}}
+\rsep
+&
+\ruleh{}
+    {\mbox{}}
+    {\judge{\Gamma}{\hastype{b}{bool}}}
+\rsep
+&
+\\
+\ruleh{}
+    {\judge{\Gamma}{\hastype{e_1}{int}} \seph \judge{\Gamma}{\hastype{e_2}{int}}}
+    {\judge{\Gamma}{\hastype{e_1 + e_2}{int}}}
+\rsep
+&
+\ruleh{}
+    {\judge{\Gamma}{\hastype{e_1}{bool}} \seph \judge{\Gamma}{\hastype{e_2}{bool}}}
+    {\judge{\Gamma}{\hastype{e_1 \&\& e_2}{bool}}}
+\rsep
+&
+\ruleh{}
+    {\judge{\Gamma}{\hastype{e_1}{int}} \seph \judge{\Gamma}{\hastype{e_2}{int}}}
+    {\judge{\Gamma}{\hastype{e_1 <= e_2}{bool}}}
+\rsep
+\\
+\ruleh{}
+    {\mbox{}}
+    {\judge{\Gamma,\hastype{x}{t}}{\hastype{x}{t}}}
+\rsep
+&
+\ruleh{}
+    {\judge{\Gamma}{\hastype{f}{s \fun t}} \seph \judge{\Gamma}{\hastype{a}{s}}}
+    {\judge{\Gamma}{\hastype{f\;a}{t}}}
+\rsep
+&
+\ruleh{}
+    {\judge{\Gamma,\hastype{x}{s}}{\hastype{e}{t}}}
+    {\judge{\Gamma}{\hastype{\lam x:s. e}{s \fun t}}}
+\end{tabular}
+\caption{Typing rules for expressions.}
+\label{fig:rules}
+\end{figure}
+
+The \te{HasType} predicate (see figure~\ref{fig:hastype}) must be extended with an environment, \te{g},
+as well.  The environment is represented simply by a function from
+symbols to types, and the function \te{extendT} is used to add
+a binding.  We assume that the environment is a total function
+(it can easily be made total).
+
+The \te{EVar} clause simply looks up the variable in the type environment
+and ``checks'' that it is equal to the type it should have.  The \te{EqType}
+predicate is used to test if two types are equal.  It is written in the
+obvious way, but yields a type instead of the usual boolean result.
+
+The \te{ELam} clause follows the typing rule closely and checks that the
+body has the right type in the extended environment.
+
+The most interesting clause is \te{EAp}.  According to the rule an application
+is well typed if there is some type $s$, that the argument has, which makes
+the types fit together.  The type $s$ is not present in the conclusion of the
+rule, which means that it is not present on the left hand side of \te{HasType}.
+Instead, it is a component of a record type on the right hand side.
+The \te{sig} keyword simply indicates a record type; it is followed by
+the signatures for its components.
+The record
+has three parts, two of them correspond to the two premises (and could be represented
+by a pair).  The first component of the record is the type \te{s} which makes the
+other two components true.  The use of a record type corresponds to using
+an existential quantifier. \tmp{MORE}
+
+Note how the definition of the \te{HasType} predicate follows the typing rules
+closely. The conclusions correspond to patterns in the predicate, and
+the premises are the right-hand-side expressions, using \te{Truth} for the
+axioms. The \te{Absurd} clause expresses that there are no other rules in
+the system but these. There are some minor differences, though:
+
+\begin{itemize}
+
+\item Cayenne does not allow variables to occur more than once in a
+  pattern, but in the rule for $\lambda$-expressions, the type $s$
+  occurs twice. The \te{ELam} clause encodes this by using two
+  variables, and an additional premise stating that these are
+  equal. The same goes for the variable clause.
+
+\item We need to be explicit about variables introduced in the
+  premises, such as $s$ in the \te{EAp} clause.
+
+\end{itemize}
+
+\begin{figure}
+\begin{verbatim}
+type TEnv = Symbol -> Type
+extendT :: TEnv -> Symbol -> Type -> TEnv
+
+HasType :: TEnv -> Expr -> Type -> #
+HasType g (EBool _)    (TBool) = Truth
+HasType g (EInt _)     (TInt)  = Truth
+HasType g (EAdd e1 e2) (TInt)  = HasType g e1 TInt  /\ HasType g e2 TInt
+HasType g (EAnd e1 e2) (TBool) = HasType g e1 TBool /\ HasType g e2 TBool
+HasType g (ELE  e1 e2) (TBool) = HasType g e1 TInt  /\ HasType g e2 TInt
+HasType g (EVar x)     t       = EqType (g x) t
+HasType g (EAp f a)    t       = 
+    sig s  :: Type
+        pf :: HasType g f (TArrow s t)
+        pa :: HasType g a s
+HasType g (Lam x s' e) (TArrow s t) = 
+    HasType (extendT g x s) e t /\ EqType s' s
+HasType _ _            _       = Absurd
+
+EqType :: Type -> Type -> #
+EqType (TInt) (TInt) = Truth
+EqType (TBool) (TBool) = Truth
+EqType (TArrow a1 r1) (TArrow a2 r2) = EqType a1 a2 /\ EqType r1 r2
+EqType _ _ = Absurd
+\end{verbatim}
+\caption{The well typing predicate.}
+\label{fig:hastype}
+\end{figure}
+
+\subsection{Representing the environment}
+The interpreter for the full language needs to use an environment to
+look up the values of variables.  The representation of this environment
+is not totally obvious since the variables can have different types.
+This problem can be solved by using both a type environment and a
+value environment.  The type of the latter can then be expressed
+using the former, as shown in figure~\ref{fig:env}.
+As can be seen from this definition the return type of the
+environment lookup depends on the value (encoding a type)
+found in the type environment.
+
+The implementation of both the type and value environments are 
+straightforward, but the type of \te{extendV} is rather complicated.
+The function \te{extendV} takes not only the expected arguments \te{r}, \te{x}, and \te{v},
+but also the type environment, \te{g}, and the type of the value, \te{t}.
+Without these it would be impossible to express the type since
+the \te{VEnv} type is indexed by the type environment.
+The \te{IF} function used in \te{entendV} is the if function that
+allows the two branches to have different types.
+
+The \te{extendV} function really has the most amazing type of any
+function in this example, so let us examine why it is type correct
+a little closer.  The type of the \te{IF} function is
+\begin{verbatim}
+ IF ::
+   (tx :: #) |-> (ty :: #) |-> 
+   (b :: Bool) -> tx -> ty -> case b of (True) -> tx; (False) -> ty
+\end{verbatim}
+
+The function arrow \te{|->} indicates that the argument does not
+normally have to be given; the type checker deduces it instead.
+
+The variable \te{v} has type ``\te{Decode t}'' and the expression
+``\te{r x}'' has type ``\te{Decode (g x)}'' according to the type
+of \te{r}.
+So looking at the right hand side of \te{extendV} we can see that it has
+type ``\te{(x' :: Symbol) -> case x == x' of (True) -> Decode t; (False) -> Decode (g x)}''.
+
+According to the signature the type should be
+``\te{VEnv (extendT g x t)}'', expand this and we get
+``\te{(x :: Symbol) -> Decode (if (x == x') t (g x))}'', furthermore, 
+expand the definition of \te{if} and we get
+``\te{(x :: Symbol) -> Decode (case x == x' of (True) -> t; (False) -> g x}''.
+Using the definition of \te{Decode} (which is really a case expression)
+and the rule of commuting case expressions the type checker can verify that
+this expression is indeed equal to the inferrred type above.
+
+\begin{figure}
+\begin{verbatim}
+type VEnv (g :: TEnv) = (x :: Symbol) -> Decode (g x)
+
+-- implementation of the environments
+emptyT :: TEnv
+emptyT = \ (s :: Symbol) -> TInt  -- make it total
+
+extendT :: TEnv -> Symbol -> Type -> TEnv
+extendT g x t = \ (x' :: Symbol) -> if (x == x') t (g x)
+
+emptyV :: VEnv emptyT
+emptyV = \ (x :: Symbol) -> 0     -- make it total
+
+extendV :: (g :: TEnv) ->
+           (r :: VEnv g) ->
+           (x :: Symbol) ->
+           (t :: Type) ->
+           (v :: Decode t) ->
+           (VEnv (extendT g x t))
+extendV g r x t v = \ (x' :: Symbol) -> IF (x == x') v (r x)
+\end{verbatim}
+\caption{Representing the environments.}
+\label{fig:env}
+\end{figure}
+
+\section{The interpreter}
+We now have all the building blocks to make the complete interpreter,
+figure~\ref{fig:interp}.  The application and $\lambda$ clauses simply
+end up as an application and a $\lambda$-expression respectively.
+For the application clause it is simply a matter of calling the
+interpreter recursively with the right arguments; note the use of
+\te{p.s} which is the type of the argument, \te{a}.  The type
+of the argument is not apparant from the value or type argument to
+\te{interp}, but can be found in the ``proof''.  In the $\lambda$ clause
+the type and value environments must be extended in the obvious way.
+
+The most complicated clause is really the variable access.
+The variable is looked up by ``\te{(r x)}''.  This expression has
+the (encoded) type ``\te{(g x)}'', but the expected return type is \te{t}.
+These two types are not obviously equal, but \te{p} is a proof
+that they actually are equal since it has type ``\te{EqType (g x) t}''.
+The function \te{convert} converts a value belonging to one
+type into the same value of another type given a proof that
+the types are actually equal.  The \te{convert} functions
+is thus nothing but an identity function and its only purpose
+is to placate the type checker.
+
+\begin{figure}
+{\small
+\begin{verbatim}
+interp :: (e :: Expr) -> (t :: Type) -> (g :: TEnv) -> 
+          VEnv g -> HasType g e t -> Decode t
+interp (EBool b)    (TBool) g r p         = b
+interp (EInt  i)    (TInt)  g r p         = i
+interp (EAdd e1 e2) (TInt)  g r (p1 & p2) = interp e1 TInt  g r p1 +  interp e2 TInt  g r p2
+interp (EAnd e1 e2) (TBool) g r (p1 & p2) = interp e1 TBool g r p1 && interp e2 TBool g r p2
+interp (ELE  e1 e2) (TBool) g r (p1 & p2) = interp e1 TInt  g r p1 <= interp e2 TInt  g r p2
+interp (Var x)      t       g r p         = convert (g x) t p (r x)
+interp (App f a)    t       g r p         = (interp f (TArrow p.s t) g r p.pf) 
+                                            (interp a p.s            g r p.pa)
+interp (Lam x _ e)  (TArrow s t) g r (p & _) = 
+     \ (v :: Decode s) -> interp e t (extendT g x s) (extendV g r x s v) p
+interp _            _       g r p         = case p of { }
+
+-- An identity function.
+convert :: (t :: Type) -> (t' :: Type) -> EqType t t' -> Decode t -> Decode t'
+\end{verbatim}
+}
+\caption{The interpreter.}
+\label{fig:interp}
+\end{figure}
+
+\tmp{MORE}
+
+\section{Type checking}
+Whenever the \te{interp} function is called it has to be given
+a value that represents the proof that the expression is well typed.
+This can, of course, be constructed by hand for any particular
+(well typed) expression.  On the other hand, if the expression comes
+from a parser we would like it to be generated dynamically.
+In this section we will take a look at a type checker that given
+an expression will either return an indication that it is ill typed,
+or the type of the expression together with the proof that it is
+well typed.  Its type is shown in figure~\ref{fig:tchecktype}.
+
+\begin{figure}
+\begin{verbatim}
+tcheck :: (e :: Expr) -> (g :: TEnv) -> 
+          Maybe (sig { t :: Type; p :: HasType g e t })
+\end{verbatim}
+\caption{The type of the type checker.}
+\label{fig:tchecktype}
+\end{figure}
+
+\tmp{MORE}
+
+\section{Putting it all together}
+Assuming that we have a parser and a printing function we can now
+put all the pieces together into a program that take a string,
+parses it, type checks the expression, interprets it, and finally
+prints the result.
+All of this is show in
+figure~\ref{fig:pp}.
+
+As shown the interpreter assumes that all free variables have value \te{0},
+but it would be easy to add a check that there are no free variables
+on the top level.  The type of this check can be refined to include
+a proof that there are no free variables, but this is left as an exercise
+for the reader.
+
+\begin{figure}
+\begin{verbatim}
+parse :: String -> Maybe Expr
+parse s = ...
+
+print :: (t :: Type) -> Decode t -> String
+print (TInt) i = System$Int.show i
+print (TBool) b = System$Bool.show b
+print (TArrow _ _) f = "<<function>>"
+
+run :: String -> String
+run s =
+    case parse s of
+    (Nothing) -> "Parse error!"
+    (Just e) ->
+        case tcheck e emptyT of
+        (Nothing) -> "Type error!"
+        (Just tp) -> print tp.t (interp e tp.t emptyT emptyV tp.p)
+\end{verbatim}
+\caption{A complete program.}
+\label{fig:pp}
+\end{figure}
+
+
+
+\section{Efficiency}
+The interpreter we have presented is more efficient than one
+using a tagged representation because it can avoid the repeated
+tagging and untagging.  On the other hand, our version of the
+interpreter has three extra arguments (the result type, the
+type environment, and the well typing proof).  These extra
+arguments are really superflous from a computational point of
+view. \cite{carlsson:disposable} describes a method where the
+Cayenne programmer uses type annotations to flag expressions and
+arguments that are only needed during type checking. The compiler is
+then able to remove all arguments except the expression to interpret, and the
+value environment. For some expressions, the resulting interpreter runs
+considerably faster than a corresponding interpreter written in
+Haskell, due to the lack of tagging and untagging.
+
+\tmp{More on how to get rid of them}
+
+A further potential source of inefficiency is the \te{convert}
+function.  It is really an identity function, but the most
+straightforward implementation of it will result in an
+function the will completely traverse the two \te{Type}
+arguments before returning the value.  This problem can
+also be remedied.
+
+\tmp{More on how to solve this problem}
+
+\section{Conclusion}
+Using dependent types it is possible to write an interpreter that
+avoids tagging, but there are several other benefits.
+\begin{itemize}
+\item 
+The typing rules were almost trivially captured as the \te{HasType} predicate
+and since the correspondance is so close it is unlikely that the definition
+is wrong.
+\item
+The type checker must be faithful to the typing rules since it delivers
+a type for the expression that is correct according to \te{HasType}.
+\item
+We do not know if the interpreter respects the operational semantics of
+the language (since the semantics has not been formalized), but we know
+that the interpreter respects the types of the language since it
+uses the \te{HasType} predicate.
+\end{itemize}
+
+This means that certain kind of errors in the type check and/or interpreter,
+e.g., claiming that integer constants have type bool, will be caught by
+the type checker.
+
+\tmp{More}
+
+\section{Acknowledgments}
+Thanks to Jim Hook for getting one of us (Lennart) started on the interpreter and
+for showing how to handle environments for a typed interpreter.
+Thanks also to Jessica who helped improving the English of this paper.
+
+\bibliography{/usr/local/lib/pmgrefs,interp}
+\bibliographystyle{alpha} 
+
+\end{document}

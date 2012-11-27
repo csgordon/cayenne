@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Modules</title>
+</head>
+
+<body background="peppers.gif">
+<h1>Modules</h1>
+Cayenne modules are simply named expressions that live in a global name
+space.  Module names are distiguished by having a $ in the name.
+The module name space could be viewed a hierarchical with
+<samp>$</samp> as the name separator (like UNIX path names use <samp>/</samp>).
+
+<p>
+A module definition looks like a simple definition except that it
+is preceeded by the keyword <samp>module</samp>.
+<br><br><code>
+<i>module</i> ::= module [concrete] <i>modid</i> :: <i>type</i> = <i>expr</i> ;
+</code><br><br>
+The type is not necessary and it can be left out.
+<br><br><code>
+<i>module</i> ::= module [concrete] <i>modid</i> = <i>expr</i> ;
+</code><br><br>
+The <samp>concrete</samp> modifier plays the same role here as for records, i.e. you can
+make the value of a module know instead of just its type.
+
+<h4>Example</h4>
+Some sample modules:
+<pre>
+module foo$bar = 42;
+
+module foo$baz =
+open System$Int use Int, (+) in
+struct {
+inc :: Int -> Int;
+inc x = x+1;
+dec :: Int -> Int;
+dec x = x-1;
+};
+</pre>
+
+<h2>#include</h2>
+Most programs need values from the <samp>System</samp> modules.  To get easy access
+to the entities defined in a module it is normally <samp>open</samp>ed.  This means
+that most modules will start out with a number of <samp>open</samp> constructs.
+To alleviate this problem there are some predefined set of texts that
+can be included in a module.  These texts are inserted by simple
+text insertion with an <samp>#include</samp>.
+
+<h4><code>#include Prelude</code></h4>
+includes the following text
+<pre>
+open System$String use * in
+open System$List use * in
+open System$Bool use  * in
+open System$Char use * in
+open System$Int use  * in
+open System$Error use * in
+open System$IO use * in
+open System$Tuples use * in
+open System$HO use * in
+</pre>
+
+<p><a href="doc.html"><img src="back.gif" border=0>Back</a>
+<hr>
+<address><a href="http://www.cs.chalmers.se/~augustss">Lennart Augustsson</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 31 01:39:59 CEST 1998
+<!-- hhmts end -->
+</body> </html>
