@@ -1,6 +1,6 @@
 module CITranslate(iToCM, iToC, ifcIToC) where
 import Data.List ((\\), group, sort)
-import ListUtil(mapSnd)
+import Libs.ListUtil(mapSnd)
 import Error(internalError)
 import Id
 import Position

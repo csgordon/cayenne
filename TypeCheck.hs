@@ -1,7 +1,7 @@
 module TypeCheck(typeCheck, typeCheckInterfaces, typeCheckInterfacesI) where
 import Data.List((\\), union, intersect, transpose)
 import Control.Monad(zipWithM, unless, when, foldM)
-import ListUtil(mapSnd, lookupWithDefault)
+import Libs.ListUtil(mapSnd, lookupWithDefault)
 import SCC
 import FString
 import PreStrings
@@ -26,7 +26,7 @@ import FindDiff
 import Util(tracex, tracex2, traces, findDup, assoc, doTrace, doFull)
 
 -- XXX
-import IOUtil(progArgs)
+import Libs.IOUtil(progArgs)
 haskellFlag = "-haskell" `elem` progArgs
 
 type StructType = Env -> Id -> Maybe IType

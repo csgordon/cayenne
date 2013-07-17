@@ -4,7 +4,7 @@ module IUtil(iFreeVars, iFreeVarsL, iNSubst, iNSubstId, iNSubstId1, patToLam, ge
 	isModuleId, isModuleString, spine, subst) where
 import Data.List(union, (\\), intersect, partition)
 import Data.Maybe(maybeToList)
-import ListUtil(mapSnd, mapFst, lookupWithDefault)
+import Libs.ListUtil(mapSnd, mapFst, lookupWithDefault)
 import SCC
 import Error(internalError)
 import Position

@@ -1,4 +1,4 @@
-module Pretty(text, separate, cseparate, nest, pretty, (~.), (^.), IText, emptyPP) where
+module Libs.Pretty(text, separate, cseparate, nest, pretty, (~.), (^.), IText, emptyPP) where
 import qualified Text.PrettyPrint.HughesPJ as P
 
 infixr 8 ~.

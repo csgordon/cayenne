@@ -2,9 +2,9 @@ module ToGHC(toGHC, hIdV, mkModName) where
 import Data.List(union, findIndex, sort, (\\))
 import Data.Maybe(maybeToList)
 import Data.Char --(isAlphanum)
-import ListUtil(mapSnd, chopList)
+import Libs.ListUtil(mapSnd, chopList)
 import Text.Printf
-import Pretty
+import Libs.Pretty
 import PPrint
 import Error
 import Id

@@ -1,5 +1,5 @@
 module BinParse(Fixity(..), binop) where
-import Parse
+import Libs.Parse
 
 data Fixity = FInfixl Int | FInfixr Int | FInfix Int
     deriving (Eq, Ord)
