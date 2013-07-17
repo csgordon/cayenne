@@ -1,6 +1,6 @@
 module Erase(eraseTypes) where
 import Data.List(findIndex)
-import ListUtil(mapSnd)
+import Libs.ListUtil(mapSnd)
 import PPrint
 import Position(noPosition)
 import Error(internalError)

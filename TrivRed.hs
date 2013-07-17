@@ -1,6 +1,6 @@
 module TrivRed(tRed) where
 import qualified UIdSet as S
-import ListUtil(mapSnd)
+import Libs.ListUtil(mapSnd)
 import Id
 import ISyntax
 import IUtil(spine, iLetSimpl, iLetrecSimpl, iLetrecSCC, patToLam', iUniv, iLam, iFreeVars, canonIProduct)

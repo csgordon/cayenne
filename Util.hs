@@ -5,12 +5,12 @@ module Util(mkSet, unions, assoc, sortFst, findDup, allSame, sortGroup, boolComp
 import Data.Function(on)
 import Data.List(sort, sortBy, group, groupBy, union, partition)
 
-import Trace
-import IOUtil(progArgs)
+import Libs.Trace
+import Libs.IOUtil (progArgs)
 
-doTrace = elem "-debug" progArgs
-doTrace2 = length (filter (== "-debug") progArgs) > 1
-doFull = elem "-full" progArgs
+doTrace = False --elem "-debug" progArgs
+doTrace2 = False -- length (filter (== "-debug") progArgs) > 1
+doFull = False -- elem "-full" progArgs
 
 tracex s x = if doTrace then traces s x else x
 tracex2 s x = if doTrace2 then traces s x else x

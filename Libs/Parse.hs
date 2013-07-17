@@ -3,11 +3,11 @@
 -- Provides generic parsing combinators.
 -- Nothing Agda specific.
 
-module Parse(Parser, (+.+), (..+), (+..), (|||), (>>-), (>>>), (||!), (|!!), (.>),
+module Libs.Parse(Parser, (+.+), (..+), (+..), (|||), (>>-), (>>>), (||!), (|!!), (.>),
              into, lit, litp, many, many1, succeed, failure, sepBy, count, sepBy1, testp, token, recover,
              ParseResult, parse, sParse, simpleParse) where
 
-import Trace
+import Libs.Trace
 import Data.List(nub)
 
 -- @@ Parsing combinatores with good error reporting.

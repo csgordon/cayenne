@@ -1,4 +1,4 @@
-module GetPid(getPid) where
+module Libs.GetPid(getPid) where
 import System.Posix
 
 getPid :: IO Int

@@ -1,6 +1,6 @@
 module CParser(pProgram, pInterface, errSyntax) where
 import Data.List(nub)
-import Parse
+import Libs.Parse
 import BinParse
 import FString
 import PreStrings(fsStar, fsComma, fsRArrow, fsBRArrow, fsDEF)
@@ -10,7 +10,7 @@ import CSyntax
 import Id
 import Lex
 
-import Trace
+import Libs.Trace
 
 infix 6 >>>> , >>>>>
 
