@@ -1,7 +1,7 @@
-module PPrint(PPrint(..), module Pretty, PDetail(..),
+module PPrint(PPrint(..), module Libs.Pretty, PDetail(..),
 	ppReadable, ppAll, ppDebug, ppString,
 	pparen, sepList) where
-import Pretty
+import Libs.Pretty
 
 data PDetail = PDReadable | PDAll | PDDebug deriving (Eq, Ord)
 

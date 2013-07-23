@@ -9,7 +9,7 @@ import Position
 import Id
 import Literal
 
-import Trace
+import Libs.Trace
 
 data CProgram
 	= CProgram (Maybe String) [CModule]

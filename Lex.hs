@@ -3,7 +3,7 @@ module Lex(Token(..), LexItem(..), prLexItem, lexStart, isIdChar) where
 import Position
 import Error
 import FString
-import ListUtil
+import Libs.ListUtil
 import Data.Char
 import Data.Ratio
 

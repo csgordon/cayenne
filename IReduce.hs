@@ -2,7 +2,7 @@ module IReduce(whnf, betaEq, cloneExpr, typeOfX, typeOf, iOpenSimpl, univKind {-
 import Data.List(union, intersect, (\\), partition)
 import Control.Monad
 import Data.Maybe
-import ListUtil(mapSnd, lookupWithDefault)
+import Libs.ListUtil(mapSnd, lookupWithDefault)
 import PPrint
 import Position(noPosition)
 import Error

@@ -4,7 +4,7 @@ module Env(Env, Bind, BindExpr, initEnv,
 	   lookupUId,
            ppEnv, ppEnvVars,
            local, defn, mdefn, defnot) where
-import ListUtil(mapFst)
+import Libs.ListUtil(mapFst)
 import PPrint
 import ISyntax
 import ISyntaxPP

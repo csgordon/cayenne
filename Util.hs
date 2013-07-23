@@ -5,8 +5,8 @@ module Util(mkSet, unions, assoc, sortFst, findDup, allSame, sortGroup, boolComp
 import Data.Function(on)
 import Data.List(sort, sortBy, group, groupBy, union, partition)
 
-import Trace
-import IOUtil(progArgs)
+import Libs.Trace
+import Libs.IOUtil (progArgs)
 
 doTrace = elem "-debug" progArgs
 doTrace2 = length (filter (== "-debug") progArgs) > 1

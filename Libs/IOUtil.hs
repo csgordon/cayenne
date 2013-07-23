@@ -1,7 +1,7 @@
 -- Copyright (c) 1982-1999 Lennart Augustsson, Thomas Johnsson
 -- See LICENSE for the full license.
 --
-module IOUtil(progArgs) where
+module Libs.IOUtil(progArgs) where
 -- Some utilities that are a little dirty, but not very.
 --import IO
 import System.IO.Unsafe

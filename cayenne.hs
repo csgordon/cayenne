@@ -9,9 +9,9 @@ import System.Environment
 import System.Cmd
 import System.Exit
 import System.Directory(removeFile, createDirectory)
-import ListUtil(chopList)
-import GetPid
-import Parse
+import Libs.ListUtil(chopList)
+import Libs.GetPid
+import Libs.Parse
 import PPrint
 import Util(revTake, revDrop, breakAt)
 import SCC(scc)
